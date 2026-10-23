@@ -1,0 +1,21 @@
+name: Docs links
+# Liveness of card docsUrl links. Separate from CI on purpose: a third-party site being down
+# must not block a build, so this runs weekly and on demand and never gates a push.
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+jobs:
+  links:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 24, cache: npm }
+      - run: npm ci
+      - name: Extract docsUrl values
+        run: node scripts/list-links.ts > links.txt
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: --no-progress --max-concurrency 4 --accept 200,201,204,301,302,308,403,429 links.txt
+          fail: false

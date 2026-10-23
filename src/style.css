@@ -7,6 +7,12 @@
   :focus-visible { outline: 3px solid #6366f1; outline-offset: 2px; }
 }
 
+/* Syntax highlighting: Shiki emits both theme colours as CSS variables. */
+.code { background: #f6f8fa; color: #24292f; }
+.dark .code { background: #0d1117; color: #e6edf3; }
+.tok { color: var(--shiki-light); }
+.dark .tok { color: var(--shiki-dark); }
+
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }

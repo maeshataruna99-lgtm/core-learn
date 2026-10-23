@@ -2,11 +2,13 @@
 import { computed, onBeforeUnmount, ref } from 'vue';
 import { useStore } from '../composables/useStore.ts';
 import type { Card } from '../core/types.ts';
+import { useT } from '../i18n/index.ts';
 import CardView from './CardView.vue';
 
 const props = defineProps<{ cards: Card[]; timed?: boolean }>();
 const emit = defineEmits<{ finish: [score: { right: number; total: number }] }>();
 
+const t = useT();
 const { answer } = useStore();
 const index = ref(0);
 const right = ref(0);
@@ -32,16 +34,18 @@ const clock = computed(() => `${Math.floor(seconds.value / 60)}:${String(seconds
 </script>
 
 <template>
-  <div v-if="cards.length === 0" class="rounded-lg border p-4">No cards match these filters.</div>
+  <div v-if="cards.length === 0" class="rounded-lg border p-4">{{ t('quiz.empty') }}</div>
   <section v-else-if="done" class="space-y-3" aria-live="polite">
-    <h2 class="text-2xl font-bold">Done</h2>
-    <p>{{ right }} / {{ cards.length }} correct<template v-if="timed"> in {{ clock }}</template>.</p>
+    <h2 class="text-2xl font-bold">{{ t('quiz.done') }}</h2>
+    <p>
+      {{ t('quiz.score', { right, total: cards.length }) }}<template v-if="timed"> {{ t('quiz.in', { time: clock }) }}</template>.
+    </p>
     <slot name="done" />
   </section>
   <div v-else class="space-y-3">
-    <div class="flex justify-between text-sm text-slate-500 dark:text-slate-400">
-      <span>Card {{ index + 1 }} of {{ cards.length }}</span>
-      <span v-if="timed" aria-label="Elapsed time">⏱ {{ clock }}</span>
+    <div class="flex justify-between text-sm text-slate-600 dark:text-slate-300">
+      <span>{{ t('quiz.cardOf', { i: index + 1, n: cards.length }) }}</span>
+      <span v-if="timed" :aria-label="t('quiz.elapsed')">⏱ {{ clock }}</span>
     </div>
     <CardView v-if="current" :key="current.id" :card="current" @next="next" />
   </div>

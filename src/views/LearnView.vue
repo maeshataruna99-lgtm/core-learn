@@ -5,12 +5,14 @@ import { useStore } from '../composables/useStore.ts';
 import { filterCards, learnOrder } from '../core/selection.ts';
 import { TRACKS } from '../core/types.ts';
 import type { Track } from '../core/types.ts';
+import { useT } from '../i18n/index.ts';
 
+const t = useT();
 const { cards } = useStore();
 const track = ref<Track | null>(null);
 const topic = ref<string | null>(null);
 
-const tracksWithCards = computed(() => TRACKS.filter((t) => cards.some((c) => c.track === t)));
+const tracksWithCards = computed(() => TRACKS.filter((tr) => cards.some((c) => c.track === tr)));
 const topics = computed(() => [...new Set(filterCards(cards, { tracks: track.value ? [track.value] : [] }).map((c) => c.topic))]);
 const session = computed(() =>
   track.value && topic.value ? learnOrder(cards.filter((c) => c.track === track.value && c.topic === topic.value)) : [],
@@ -20,12 +22,12 @@ const back = () => (topic.value ? (topic.value = null) : (track.value = null));
 
 <template>
   <div class="space-y-4">
-    <h1 class="text-2xl font-bold">Learn</h1>
-    <button v-if="track" class="underline" @click="back">← Back</button>
+    <h1 class="text-2xl font-bold">{{ t('learn.title') }}</h1>
+    <button v-if="track" class="underline" @click="back">{{ t('learn.back') }}</button>
     <ul v-if="!track" class="space-y-2">
-      <li v-for="t in tracksWithCards" :key="t">
-        <button class="w-full rounded-lg border border-slate-300 px-4 py-3 text-left dark:border-slate-600" @click="track = t">
-          {{ t }} <span class="text-sm text-slate-500">({{ cards.filter((c) => c.track === t).length }} cards)</span>
+      <li v-for="tr in tracksWithCards" :key="tr">
+        <button class="w-full rounded-lg border border-slate-300 px-4 py-3 text-left dark:border-slate-600" @click="track = tr">
+          {{ tr }} <span class="text-sm text-slate-600 dark:text-slate-300">{{ t('learn.cards', { n: cards.filter((c) => c.track === tr).length }) }}</span>
         </button>
       </li>
     </ul>
@@ -35,7 +37,9 @@ const back = () => (topic.value ? (topic.value = null) : (track.value = null));
       </li>
     </ul>
     <QuizRunner v-else :key="`${track}/${topic}`" :cards="session">
-      <template #done><button class="underline" @click="topic = null">Choose another topic</button></template>
+      <template #done>
+        <button class="underline" @click="topic = null">{{ t('learn.another') }}</button>
+      </template>
     </QuizRunner>
   </div>
 </template>

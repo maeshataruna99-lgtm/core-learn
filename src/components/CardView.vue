@@ -2,26 +2,28 @@
 import { computed, ref } from 'vue';
 import { isCorrect } from '../core/answers.ts';
 import type { Card } from '../core/types.ts';
+import { useHighlightedLines } from '../composables/useHighlight.ts';
+import { useT } from '../i18n/index.ts';
+import CodeBlock from './CodeBlock.vue';
 
 const props = defineProps<{ card: Card }>();
 const emit = defineEmits<{ next: [correct: boolean] }>();
+const t = useT();
 
 const flipped = ref(false);
 const chosen = ref<number | null>(null);
 const verdict = ref<boolean | null>(null);
 
-const codeLines = computed(() =>
-  props.card.type === 'output' || props.card.type === 'bugspot' ? props.card.code.split('\n') : [],
-);
+const code = computed(() => (props.card.type === 'bugspot' ? props.card.code : ''));
+const language = computed(() => (props.card.type === 'bugspot' ? props.card.language : ''));
+const plainLines = computed(() => code.value.split('\n'));
+const tokenLines = useHighlightedLines(() => code.value, () => language.value);
 const answered = computed(() => verdict.value !== null);
 
 function pick(response: number | boolean) {
   if (answered.value) return;
   if (typeof response === 'number') chosen.value = response;
   verdict.value = isCorrect(props.card, response);
-}
-function know(knew: boolean) {
-  pick(knew);
 }
 const optionState = (i: number) => {
   if (!answered.value || (props.card.type !== 'mcq' && props.card.type !== 'output')) return '';
@@ -33,7 +35,7 @@ const optionState = (i: number) => {
 
 <template>
   <article class="space-y-4" :aria-label="`${card.track} ${card.type} card`">
-    <p class="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+    <p class="text-xs uppercase tracking-wide text-slate-600 dark:text-slate-300">
       {{ card.track }} · {{ card.topic }} · {{ card.level }}
     </p>
 
@@ -46,11 +48,11 @@ const optionState = (i: number) => {
       >
         <span class="block text-lg font-semibold">{{ card.front }}</span>
         <span v-if="flipped" class="mt-3 block">{{ card.back }}</span>
-        <span v-else class="mt-3 block text-sm text-slate-500">Tap to reveal</span>
+        <span v-else class="mt-3 block text-sm text-slate-600 dark:text-slate-300">{{ t('card.reveal') }}</span>
       </button>
       <div v-if="flipped && !answered" class="flex gap-2">
-        <button class="flex-1 rounded bg-emerald-600 px-4 text-white" @click="know(true)">Knew it</button>
-        <button class="flex-1 rounded bg-slate-600 px-4 text-white" @click="know(false)">Didn't</button>
+        <button class="flex-1 rounded bg-emerald-700 px-4 text-white" @click="pick(true)">{{ t('card.knew') }}</button>
+        <button class="flex-1 rounded bg-slate-700 px-4 text-white" @click="pick(false)">{{ t('card.didnt') }}</button>
       </div>
     </template>
 
@@ -58,8 +60,8 @@ const optionState = (i: number) => {
     <template v-else-if="card.type === 'mcq' || card.type === 'output'">
       <p v-if="card.type === 'mcq'" class="text-lg font-semibold">{{ card.question }}</p>
       <template v-else>
-        <p class="text-lg font-semibold">What does this print?</p>
-        <pre class="overflow-x-auto rounded-lg bg-slate-900 p-3 text-sm text-slate-100"><code>{{ card.code }}</code></pre>
+        <p class="text-lg font-semibold">{{ t('card.printQ') }}</p>
+        <CodeBlock :code="card.code" :language="card.language" />
       </template>
       <ul class="space-y-2">
         <li v-for="(opt, i) in card.options" :key="i">
@@ -69,10 +71,10 @@ const optionState = (i: number) => {
             :disabled="answered"
             @click="pick(i)"
           >
-            <span aria-hidden="true" class="font-mono text-slate-500">{{ 'ABCD'[i] }}</span>
+            <span aria-hidden="true" class="font-mono text-slate-600 dark:text-slate-300">{{ 'ABCD'[i] }}</span>
             <span>{{ opt }}</span>
-            <span v-if="answered && i === card.answerIndex" class="ml-auto font-semibold">✓ Correct answer</span>
-            <span v-else-if="answered && i === chosen" class="ml-auto font-semibold">✗ Your answer</span>
+            <span v-if="answered && i === card.answerIndex" class="ml-auto font-semibold">{{ t('card.correctAnswer') }}</span>
+            <span v-else-if="answered && i === chosen" class="ml-auto font-semibold">{{ t('card.yourAnswer') }}</span>
           </button>
         </li>
       </ul>
@@ -80,18 +82,24 @@ const optionState = (i: number) => {
 
     <!-- bugspot -->
     <template v-else>
-      <p class="text-lg font-semibold">Tap the buggy line.</p>
-      <ol class="overflow-x-auto rounded-lg bg-slate-900 py-2 text-sm text-slate-100">
-        <li v-for="(line, i) in codeLines" :key="i">
+      <p class="text-lg font-semibold">{{ t('card.tapBug') }}</p>
+      <ol class="code overflow-x-auto rounded-lg py-2 text-sm">
+        <li v-for="(line, i) in plainLines" :key="i">
           <button
-            class="flex w-full min-w-max items-center gap-3 px-3 text-left font-mono hover:bg-slate-700"
-            :class="answered && card.buggyLines.includes(i + 1) ? 'bg-emerald-900' : answered && chosen === i + 1 ? 'bg-rose-900' : ''"
+            class="flex w-full min-w-max items-center gap-3 px-3 text-left font-mono hover:bg-slate-500/20"
+            :class="answered && card.buggyLines.includes(i + 1) ? 'bg-emerald-500/30' : answered && chosen === i + 1 ? 'bg-rose-500/30' : ''"
             :disabled="answered"
+            :aria-label="`${i + 1}: ${line.trim() || '(blank)'}`"
             @click="pick(i + 1)"
           >
-            <span aria-hidden="true" class="w-6 select-none text-right text-slate-400">{{ i + 1 }}</span>
-            <span class="whitespace-pre">{{ line || ' ' }}</span>
-            <span v-if="answered && card.buggyLines.includes(i + 1)" class="ml-auto pl-4">← bug</span>
+            <span aria-hidden="true" class="w-6 select-none text-right opacity-60">{{ i + 1 }}</span>
+            <span class="whitespace-pre">
+              <template v-if="tokenLines?.[i]?.length">
+                <span v-for="(tok, j) in tokenLines[i]" :key="j" class="tok" :style="tok.style">{{ tok.content }}</span>
+              </template>
+              <template v-else>{{ line || ' ' }}</template>
+            </span>
+            <span v-if="answered && card.buggyLines.includes(i + 1)" class="ml-auto pl-4">{{ t('card.bug') }}</span>
           </button>
         </li>
       </ol>
@@ -99,15 +107,15 @@ const optionState = (i: number) => {
 
     <!-- feedback -->
     <section v-if="answered" class="space-y-2 rounded-lg border border-slate-300 p-4 dark:border-slate-600" aria-live="polite">
-      <p class="font-semibold">{{ verdict ? '✓ Correct' : '✗ Not quite' }}</p>
+      <p class="font-semibold">{{ verdict ? t('card.correct') : t('card.wrong') }}</p>
       <p>{{ card.explanation }}</p>
-      <p v-if="card.source" class="text-sm text-slate-500 dark:text-slate-400">
-        Inspired by {{ card.source.repo }}<template v-if="card.source.path"> — {{ card.source.path }}</template>
+      <p v-if="card.source" class="text-sm text-slate-600 dark:text-slate-300">
+        {{ t('card.inspired') }} {{ card.source.repo }}<template v-if="card.source.path"> — {{ card.source.path }}</template>
       </p>
-      <a v-if="card.docsUrl" :href="card.docsUrl" target="_blank" rel="noopener" class="inline-flex items-center text-indigo-600 underline dark:text-indigo-300">
-        Official docs
+      <a v-if="card.docsUrl" :href="card.docsUrl" target="_blank" rel="noopener" class="inline-flex items-center text-indigo-700 underline dark:text-indigo-300">
+        {{ t('card.docs') }}
       </a>
-      <button class="mt-2 block w-full rounded bg-indigo-600 px-4 text-white" @click="emit('next', verdict === true)">Next</button>
+      <button class="mt-2 block w-full rounded bg-indigo-700 px-4 text-white" @click="emit('next', verdict === true)">{{ t('card.next') }}</button>
     </section>
   </article>
 </template>
