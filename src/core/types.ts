@@ -1,0 +1,58 @@
+export type Level = 'beginner' | 'intermediate' | 'advanced';
+export type Track =
+  | 'typescript-node' | 'nestjs-prisma' | 'vue3' | 'java-spring'
+  | 'security' | 'sql-db' | 'messaging';
+
+export const TRACKS: Track[] = [
+  'typescript-node', 'nestjs-prisma', 'vue3', 'java-spring', 'security', 'sql-db', 'messaging',
+];
+export const LEVELS: Level[] = ['beginner', 'intermediate', 'advanced'];
+
+export interface CardBase {
+  id: string;
+  track: Track;
+  stack?: string;
+  topic: string;
+  level: Level;
+  tags: string[];
+  explanation: string;
+  source?: { repo: string; path?: string };
+  docsUrl?: string;
+}
+
+export interface Flashcard extends CardBase { type: 'flashcard'; front: string; back: string }
+export interface Mcq extends CardBase { type: 'mcq'; question: string; options: string[]; answerIndex: number }
+export interface OutputCard extends CardBase {
+  type: 'output'; language: string; code: string; options: string[]; answerIndex: number;
+  /** Real stdout captured by running the code; checked by scripts/verify-output.ts. */
+  verifiedOutput?: string;
+}
+export interface BugSpot extends CardBase {
+  type: 'bugspot'; language: string; code: string; buggyLines: number[];
+}
+export type Card = Flashcard | Mcq | OutputCard | BugSpot;
+export type CardType = Card['type'];
+
+export type Box = 1 | 2 | 3 | 4 | 5;
+export interface CardProgress {
+  box: Box;
+  dueAt: string;
+  right: number;
+  wrong: number;
+  lastSeenAt: string;
+}
+export type ProgressMap = Record<string, CardProgress>;
+
+export interface Settings {
+  theme: 'system' | 'light' | 'dark';
+  language: 'en' | 'id';
+  quizLength: number;
+  timer: boolean;
+}
+export const DEFAULT_SETTINGS: Settings = { theme: 'system', language: 'en', quizLength: 10, timer: false };
+
+export interface Store {
+  version: 1;
+  progress: ProgressMap;
+  settings: Settings;
+}

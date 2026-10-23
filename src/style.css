@@ -1,0 +1,12 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  button, a, [role='button'] { min-height: 44px; }
+  :focus-visible { outline: 3px solid #6366f1; outline-offset: 2px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}
