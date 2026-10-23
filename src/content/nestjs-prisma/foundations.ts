@@ -43,7 +43,7 @@ export const cards: Card[] = [
     front: 'What do decorators like @Controller(), @Get() and @Injectable() do?',
     back: 'They attach metadata to a class or method. @Controller("users") says "this class handles /users", @Get(":id") says "this method handles GET /users/:id", @Injectable() says "Nest may create and inject this class".',
     explanation: 'The Java equivalent is annotations (@RestController, @GetMapping, @Service).',
-    docsUrl: `${nest}/custom-decorators`,
+    docsUrl: `${nest}/controllers`,
   },
   {
     ...base, topic: 'foundations', id: 'nestjs-prisma/foundations/rest-verbs', type: 'mcq', tags: ['rest', 'http'],
@@ -77,7 +77,7 @@ export const cards: Card[] = [
     },
     front: 'What is Prisma?',
     back: 'An ORM for Node and TypeScript. You define models in schema.prisma, Prisma migrates the database to match, and generates a type-safe client so queries are checked by the compiler.',
-    explanation: 'It plays the role Hibernate/JPA plays in the Java stack.',
+    explanation: 'It plays the role Hibernate/JPA plays in the Java stack. These cards teach Prisma Client as used in Prisma ORM 7 and earlier (schema.prisma and prisma.user.create(...)); the newest docs describe a different API, so check which version a project uses.',
     docsUrl: `${prisma}/prisma-schema/overview`,
   },
   {
@@ -88,7 +88,7 @@ export const cards: Card[] = [
     },
     front: 'What does a `model User { id Int @id @default(autoincrement()) email String @unique }` declare?',
     back: 'A table User with an integer primary key that auto-increments (@id, @default(autoincrement())) and an email column that must be unique (@unique).',
-    explanation: 'After changing the schema, run prisma migrate dev to update the database and prisma generate to refresh the typed client.',
+    explanation: 'After changing the schema, run prisma migrate dev to update the database and prisma generate to refresh the typed client. (Prisma ORM 7 and earlier; the newest docs use a different schema format.)',
     docsUrl: `${prisma}/prisma-schema/data-model/models`,
   },
   {
@@ -105,7 +105,7 @@ export const cards: Card[] = [
       'prisma.user.delete({ data: { email } })',
     ],
     answerIndex: 0,
-    explanation: 'create inserts, findMany/findUnique read, update changes (needs where and data) and delete removes (needs where).',
+    explanation: 'create inserts, findMany/findUnique read, update changes (needs where and data) and delete removes (needs where). This is the Prisma Client API of Prisma ORM 7 and earlier; the newest docs describe a different query API.',
     docsUrl: `${prisma}/prisma-client/queries/crud`,
   },
   {

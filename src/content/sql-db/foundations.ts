@@ -14,7 +14,7 @@ export const cards: Card[] = [
     front: 'What are a table, a row and a column?',
     back: 'A table stores one kind of thing (users). A row is one record in it (one user). A column is one attribute with a fixed type (email, created_at). SQL is the language used to read and change them.',
     explanation: 'In an ORM, a table maps to a class (entity or model), a row to an object, and a column to a field.',
-    docsUrl: `${pg}/tutorial-table.html`,
+    docsUrl: `${pg}/ddl-basics.html`,
   },
   {
     ...base, topic: 'foundations', id: 'sql-db/foundations/primary-key', type: 'mcq', tags: ['keys'],
