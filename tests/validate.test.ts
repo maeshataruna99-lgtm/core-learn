@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { allCards } from '../src/content/index.ts';
+import { primers } from '../src/content/primers.ts';
 import { validateCards } from '../src/core/validate.ts';
 import type { Card } from '../src/core/types.ts';
 
@@ -29,10 +30,15 @@ describe('content validator', () => {
     expect(validateCards([mcq({ primer: { en: 'Same', id: 'Same' } })])[0]).toMatch(/identical/);
     expect(validateCards([mcq({ primer, level: 'advanced' })])[0]).toMatch(/only for beginner/);
   });
-  it('gives every shipped beginner foundation card a primer', () => {
-    const foundations = allCards.filter((c) => c.id.includes('/foundations/') || /\/(spring-basics|layers|jpa-basics|jpql)\//.test(c.id));
-    expect(foundations.length).toBeGreaterThan(60);
-    expect(foundations.filter((c) => !c.primer).map((c) => c.id)).toEqual([]);
+  it('gives every beginner card a primer', () => {
+    const beginner = allCards.filter((c) => c.level === 'beginner');
+    expect(beginner.length).toBeGreaterThan(100);
+    expect(beginner.filter((c) => !c.primer).map((c) => c.id)).toEqual([]);
+  });
+  it('has no primer entries for cards that do not exist or are not beginner', () => {
+    const byId = new Map(allCards.map((c) => [c.id, c]));
+    const stale = Object.keys(primers).filter((id) => byId.get(id)?.level !== 'beginner');
+    expect(stale).toEqual([]);
   });
   it('checks bugspot line range', () => {
     const bug = { type: 'bugspot', language: 'ts', code: 'a\nb', buggyLines: [3], question: undefined, options: undefined };

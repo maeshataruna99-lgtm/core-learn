@@ -1,4 +1,5 @@
 import type { Card } from '../core/types.ts';
+import { primers } from './primers.ts';
 import { cards as tsAsync } from './typescript-node/async.ts';
 import { cards as tsTypes } from './typescript-node/types.ts';
 import { cards as tsCore } from './typescript-node/core.ts';
@@ -29,7 +30,7 @@ import { cards as messagingFoundations } from './messaging/foundations.ts';
 /** Foundation files are written in teaching order; remember that order for Learn mode. */
 const sequence = (cards: Card[]): Card[] => cards.map((c, i) => ({ ...c, order: i + 1 }));
 
-export const allCards: Card[] = [
+const authored: Card[] = [
   ...tsAsync, ...tsTypes, ...tsCore, ...tsAdvanced,
   ...nestGuards, ...nestCore, ...nestAdvanced,
   ...vueReactivity, ...vueCore, ...vueAdvanced,
@@ -45,3 +46,6 @@ export const allCards: Card[] = [
   ...sequence(sqlFoundations),
   ...sequence(messagingFoundations),
 ];
+
+/** Attach the beginner primers that live in primers.ts to cards that do not carry their own. */
+export const allCards: Card[] = authored.map((c) => (c.primer || !primers[c.id] ? c : { ...c, primer: primers[c.id] }));
