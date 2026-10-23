@@ -94,14 +94,15 @@ Promise.all([sleep(20, 'a'), sleep(5, 'b')]).then((results) => console.log(resul
   {
     ...base, topic: 'async', id: 'typescript-node/async/next-tick-order', type: 'output', level: 'advanced', tags: ['event-loop', 'node'],
     language: 'js',
-    code: `Promise.resolve().then(() => console.log('promise'));
+    code: `// CommonJS script (not an ES module)
+Promise.resolve().then(() => console.log('promise'));
 process.nextTick(() => console.log('tick'));
 console.log('sync');`,
     options: ['sync promise tick', 'sync tick promise', 'tick promise sync', 'promise tick sync'],
     answerIndex: 1,
     verifiedOutput: 'sync\ntick\npromise',
-    explanation: 'After the synchronous code finishes, Node drains the process.nextTick queue before the promise microtask queue. Avoid nextTick in new code; it can starve I/O if used recursively.',
-    docsUrl: 'https://nodejs.org/en/learn/asynchronous-work/understanding-processnexttick',
+    explanation: 'In a CommonJS script, Node drains the process.nextTick queue before promise microtasks once the synchronous code finishes. In an ES module the order is reversed (promise first), so do not rely on it. Avoid nextTick in new code; recursive use can starve I/O.',
+    docsUrl: 'https://nodejs.org/api/process.html#when-to-use-queuemicrotask-vs-processnexttick',
   },
   {
     ...base, topic: 'async', id: 'typescript-node/async/abort-controller', type: 'mcq', level: 'intermediate', tags: ['abort', 'fetch'],
@@ -114,7 +115,7 @@ console.log('sync');`,
     ],
     answerIndex: 0,
     explanation: 'The fetch promise rejects with an AbortError. Unlike a bare promise, an operation that accepts a signal can really stop its work, which is how a timeout can free resources.',
-    docsUrl: 'https://developer.mozilla.org/en-US/docs/Web/API/AbortController',
+    docsUrl: 'https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal',
   },
   // ---- node-runtime ----
   {
@@ -146,7 +147,7 @@ emitter.emit('x');`,
   {
     ...base, topic: 'node-runtime', id: 'typescript-node/node-runtime/backpressure', type: 'flashcard', level: 'advanced', tags: ['streams'],
     front: 'What is backpressure in Node streams, and what handles it for you?',
-    back: 'A fast producer can fill a slow consumer\'s buffer. writable.write() returns false when the buffer is full and you should wait for "drain". stream.pipeline() and pipe() do this automatically and also clean up on errors.',
+    back: 'A fast producer can fill a slow consumer\'s buffer. writable.write() returns false when the buffer is full and you should wait for "drain". pipe() applies backpressure automatically, and stream.pipeline() builds on it while also forwarding errors and cleaning up the streams.',
     explanation: 'Ignoring it buffers whole files in memory, for example when streaming an upload to storage.',
     docsUrl: 'https://nodejs.org/en/learn/modules/backpressuring-in-streams',
   },
@@ -182,6 +183,6 @@ console.log(b.when instanceof Date, b.when === a.when);`,
     answerIndex: 0,
     verifiedOutput: 'true false',
     explanation: 'structuredClone makes a deep copy that preserves Dates, Maps and Sets (unlike JSON.stringify, which turns a Date into a string). It cannot clone functions.',
-    docsUrl: `https://developer.mozilla.org/en-US/docs/Web/API/Window/structuredClone`,
+    docsUrl: 'https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API/Structured_clone_algorithm',
   },
 ];

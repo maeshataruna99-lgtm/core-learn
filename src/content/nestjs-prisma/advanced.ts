@@ -153,7 +153,7 @@ export const cards: Card[] = [
     answerIndex: 0,
     explanation: 'Interactive transactions default to maxWait 2 s (to get a connection) and timeout 5 s. Keep them short, never call slow external services inside one, and raise the limits deliberately when needed.',
     source: { repo: light },
-    docsUrl: `${prisma}/prisma-client/queries/transactions#transaction-options`,
+    docsUrl: `${prisma}/reference/prisma-client-reference`,
   },
   {
     ...base, topic: 'prisma-queries', id: 'nestjs-prisma/prisma-queries/find-unique-vs-first', type: 'flashcard', level: 'beginner', tags: ['prisma', 'queries'],

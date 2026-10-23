@@ -20,14 +20,14 @@ export const cards: Card[] = [
     answerIndex: 0,
     explanation: 'Auto-imports are resolved at build time, so unused ones are tree-shaken. Explicit imports still work and are clearer when a name could be ambiguous.',
     source: { repo: simrs, path: 'apps/web/composables/master/mcu/useMcuAlergiApi.ts' },
-    docsUrl: `${nuxt}/guide/concepts/auto-imports`,
+    docsUrl: `${nuxt}/4.x/guide/concepts/auto-imports`,
   },
   {
     ...base, topic: 'nuxt', id: 'vue3/nuxt/usefetch-vs-fetch', type: 'flashcard', level: 'intermediate', tags: ['nuxt', 'ssr'],
     front: 'useFetch vs $fetch in Nuxt',
     back: 'useFetch is for loading data in a component or page: it runs on the server, passes the result to the client in the payload, and avoids a second request on hydration. $fetch is a plain request function for event handlers such as clicks and form submits.',
     explanation: 'Calling $fetch at the top level of a component fetches twice (once on the server, once on the client).',
-    docsUrl: `${nuxt}/getting-started/data-fetching`,
+    docsUrl: `${nuxt}/4.x/getting-started/data-fetching`,
   },
   {
     ...base, topic: 'nuxt', id: 'vue3/nuxt/hydration-mismatch', type: 'mcq', level: 'advanced', tags: ['nuxt', 'ssr'],

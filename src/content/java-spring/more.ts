@@ -135,7 +135,7 @@ public class Main {
     answerIndex: 0,
     explanation: 'A host that is down fails at connect; a host that accepts the connection but hangs is caught by read. Without both, one slow dependency can tie up all your threads.',
     source: { repo, path: 'services/api-1-user-aggregator/src/main/java/id/maetaruna/assessment/userapi/config/RestClientConfig.java' },
-    docsUrl: `${spring}/integration/rest-clients.html`,
+    docsUrl: 'https://docs.spring.io/spring-boot/reference/io/rest-client.html',
   },
   {
     ...base, topic: 'resilience', id: 'java-spring/resilience/gateway-status-codes', type: 'mcq', level: 'intermediate', tags: ['http', 'gateway'],
