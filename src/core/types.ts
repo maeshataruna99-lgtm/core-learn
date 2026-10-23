@@ -1,10 +1,10 @@
 export type Level = 'beginner' | 'intermediate' | 'advanced';
 export type Track =
   | 'typescript-node' | 'nestjs-prisma' | 'vue3' | 'java-spring'
-  | 'security' | 'sql-db' | 'messaging';
+  | 'security' | 'sql-db' | 'messaging' | 'cs-basics';
 
 export const TRACKS: Track[] = [
-  'typescript-node', 'nestjs-prisma', 'vue3', 'java-spring', 'security', 'sql-db', 'messaging',
+  'typescript-node', 'nestjs-prisma', 'vue3', 'java-spring', 'security', 'sql-db', 'messaging', 'cs-basics',
 ];
 export const LEVELS: Level[] = ['beginner', 'intermediate', 'advanced'];
 

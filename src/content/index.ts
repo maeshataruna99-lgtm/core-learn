@@ -26,6 +26,13 @@ import { cards as javaFoundations } from './java-spring/foundations.ts';
 import { cards as securityFoundations } from './security/foundations.ts';
 import { cards as sqlFoundations } from './sql-db/foundations.ts';
 import { cards as messagingFoundations } from './messaging/foundations.ts';
+import { cards as javaInterview } from './java-spring/interview.ts';
+import { cards as sqlInterview } from './sql-db/interview.ts';
+import { cards as jsInterview } from './typescript-node/interview.ts';
+import { cards as vueInterview } from './vue3/interview.ts';
+import { cards as csOop } from './cs-basics/oop.ts';
+import { cards as csDsa } from './cs-basics/dsa.ts';
+import { cards as csWeb } from './cs-basics/web.ts';
 
 /** Foundation files are written in teaching order; remember that order for Learn mode. */
 const sequence = (cards: Card[]): Card[] => cards.map((c, i) => ({ ...c, order: i + 1 }));
@@ -45,6 +52,8 @@ const authored: Card[] = [
   ...sequence(securityFoundations),
   ...sequence(sqlFoundations),
   ...sequence(messagingFoundations),
+  ...javaInterview, ...sqlInterview, ...jsInterview, ...vueInterview,
+  ...csOop, ...csDsa, ...csWeb,
 ];
 
 /** Attach the beginner primers that live in primers.ts to cards that do not carry their own. */
