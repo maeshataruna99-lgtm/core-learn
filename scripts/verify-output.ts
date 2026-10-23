@@ -21,11 +21,16 @@ for (const c of allCards) {
     if (c.language === 'js') {
       const f = join(dir, 'main.js');
       writeFileSync(f, c.code);
-      out = execFileSync('node', [f], { encoding: 'utf8' });
+      out = execFileSync('node', ['--no-warnings', f], { encoding: 'utf8' });
     } else if (c.language === 'java') {
       const f = join(dir, 'Main.java');
       writeFileSync(f, c.code);
       out = execFileSync('java', [f], { encoding: 'utf8' });
+    } else if (c.language === 'sql') {
+      // Executed on SQLite, so SQL cards must teach behaviour that is true in SQLite and PostgreSQL.
+      const f = join(dir, 'main.sql');
+      writeFileSync(f, c.code);
+      out = execFileSync('node', ['--no-warnings', join(import.meta.dirname, 'sql-runner.ts'), f], { encoding: 'utf8' });
     } else { skipped.push(c.id); continue; }
     checked++;
     if (norm(out) !== norm(c.verifiedOutput)) {
