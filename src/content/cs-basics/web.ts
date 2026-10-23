@@ -82,6 +82,6 @@ export const cards: Card[] = [
     ],
     answerIndex: 0,
     explanation: 'Because any script (including an injected one) can read localStorage, avoid keeping long-lived secrets there. HttpOnly cookies cannot be read by JavaScript, which protects them from XSS theft. sessionStorage is cleared when the tab closes.',
-    docsUrl: 'https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API',
+    docsUrl: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Cookies',
   },
 ];

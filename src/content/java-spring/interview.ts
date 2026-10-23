@@ -383,7 +383,7 @@ public class Main {
     ],
     answerIndex: 0,
     explanation: 'You still use Spring concepts (beans, dependency injection, MVC). Boot removes most boilerplate: it picks configurations from the libraries on your classpath and packages the app as a runnable jar.',
-    docsUrl: `${boot}/index.html`,
+    docsUrl: 'https://spring.io/projects/spring-boot',
   },
   {
     ...base, topic: 'spring-boot-qa', id: 'java-spring/spring-boot-qa/auto-configuration', level: 'intermediate', type: 'mcq', tags: ['boot', 'auto-configuration'],
@@ -424,7 +424,7 @@ public class Main {
     front: 'What is the default port of an embedded Spring Boot server and how do you change it?',
     back: 'It listens on 8080 by default. Set server.port in application.properties (or application.yml), or pass --server.port=9000 or the SERVER_PORT environment variable. server.port=0 picks a random free port.',
     explanation: 'Command-line arguments and environment variables override the configuration file, which is handy in deployments.',
-    docsUrl: `${boot}/web/servlet.html`,
+    docsUrl: 'https://docs.spring.io/spring-boot/how-to/webserver.html',
   },
   {
     ...base, topic: 'spring-boot-qa', id: 'java-spring/spring-boot-qa/bean-scopes', level: 'intermediate', type: 'mcq', tags: ['beans', 'scope', 'interview'],

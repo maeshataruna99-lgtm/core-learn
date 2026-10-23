@@ -67,7 +67,7 @@ export const cards: Card[] = [
     ],
     answerIndex: 0,
     explanation: 'If B and C both extend A and D extends both, which version of A\'s method does D inherit? C++ allows multiple inheritance and needs rules (virtual inheritance); Java forbids multiple class inheritance and makes you override when two interface default methods clash.',
-    docsUrl: 'https://docs.oracle.com/javase/tutorial/java/IandI/defaultmethods.html',
+    docsUrl: 'https://docs.oracle.com/javase/specs/jls/se21/html/jls-8.html',
   },
   {
     ...base, id: 'cs-basics/oop/polymorphism-kinds', level: 'intermediate', type: 'flashcard', tags: ['polymorphism', 'interview'],
