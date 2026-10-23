@@ -18,6 +18,16 @@ import { cards as sqlIndexes } from './sql-db/indexes.ts';
 import { cards as sqlCore } from './sql-db/core.ts';
 import { cards as messagingBrokers } from './messaging/brokers.ts';
 import { cards as messagingCore } from './messaging/core.ts';
+import { cards as tsFoundations } from './typescript-node/foundations.ts';
+import { cards as nestFoundations } from './nestjs-prisma/foundations.ts';
+import { cards as vueFoundations } from './vue3/foundations.ts';
+import { cards as javaFoundations } from './java-spring/foundations.ts';
+import { cards as securityFoundations } from './security/foundations.ts';
+import { cards as sqlFoundations } from './sql-db/foundations.ts';
+import { cards as messagingFoundations } from './messaging/foundations.ts';
+
+/** Foundation files are written in teaching order; remember that order for Learn mode. */
+const sequence = (cards: Card[]): Card[] => cards.map((c, i) => ({ ...c, order: i + 1 }));
 
 export const allCards: Card[] = [
   ...tsAsync, ...tsTypes, ...tsCore, ...tsAdvanced,
@@ -27,4 +37,11 @@ export const allCards: Card[] = [
   ...securityApi, ...securityCore,
   ...sqlIndexes, ...sqlCore,
   ...messagingBrokers, ...messagingCore,
+  ...sequence(tsFoundations),
+  ...sequence(nestFoundations),
+  ...sequence(vueFoundations),
+  ...sequence(javaFoundations),
+  ...sequence(securityFoundations),
+  ...sequence(sqlFoundations),
+  ...sequence(messagingFoundations),
 ];

@@ -8,8 +8,15 @@ export const TRACKS: Track[] = [
 ];
 export const LEVELS: Level[] = ['beginner', 'intermediate', 'advanced'];
 
+/** A short beginner explanation of the concept, shown before the question. Both languages are required. */
+export interface Primer { en: string; id: string }
+
 export interface CardBase {
   id: string;
+  /** "Learn the basics first": plain-language background for someone who has never met the concept. */
+  primer?: Primer;
+  /** Teaching sequence within a topic in Learn mode (lower first). Cards without one keep the default order. */
+  order?: number;
   track: Track;
   stack?: string;
   topic: string;

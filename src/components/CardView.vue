@@ -3,12 +3,15 @@ import { computed, ref } from 'vue';
 import { isCorrect } from '../core/answers.ts';
 import type { Card } from '../core/types.ts';
 import { useHighlightedLines } from '../composables/useHighlight.ts';
+import { useStore } from '../composables/useStore.ts';
 import { useT } from '../i18n/index.ts';
 import CodeBlock from './CodeBlock.vue';
 
 const props = defineProps<{ card: Card }>();
 const emit = defineEmits<{ next: [correct: boolean] }>();
 const t = useT();
+const { store } = useStore();
+const primerText = computed(() => props.card.primer?.[store.settings.language] ?? '');
 
 const flipped = ref(false);
 const chosen = ref<number | null>(null);
@@ -39,6 +42,12 @@ const optionState = (i: number) => {
       {{ card.track }} · {{ card.topic }} · {{ card.level }}
     </p>
 
+    <!-- beginner primer: open by default so a newcomer reads it before answering -->
+    <details v-if="primerText" open class="rounded-lg border border-amber-300 bg-amber-50 p-3 dark:border-amber-700 dark:bg-amber-950">
+      <summary class="cursor-pointer font-semibold">{{ t('card.primer') }}</summary>
+      <p class="mt-2 whitespace-pre-line">{{ primerText }}</p>
+    </details>
+
     <!-- flashcard -->
     <template v-if="card.type === 'flashcard'">
       <button
@@ -58,7 +67,7 @@ const optionState = (i: number) => {
 
     <!-- mcq / output -->
     <template v-else-if="card.type === 'mcq' || card.type === 'output'">
-      <p v-if="card.type === 'mcq'" class="text-lg font-semibold">{{ card.question }}</p>
+      <p v-if="card.type === 'mcq'" class="whitespace-pre-line text-lg font-semibold">{{ card.question }}</p>
       <template v-else>
         <p class="text-lg font-semibold">{{ t('card.printQ') }}</p>
         <CodeBlock :code="card.code" :language="card.language" />

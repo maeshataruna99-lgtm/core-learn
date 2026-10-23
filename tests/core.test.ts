@@ -71,6 +71,10 @@ describe('selection', () => {
   it('learn order: level asc, flashcards first', () => {
     expect(learnOrder(cards).map((c) => c.id)).toEqual(['a/3', 'b/1', 'a/2', 'a/1']);
   });
+  it('learn order honours an authored order within a level', () => {
+    const seq = [mk('x/3', { order: 2 }), mk('x/2', { order: 1 }), mk('x/1')];
+    expect(learnOrder(seq).map((c) => c.id)).toEqual(['x/2', 'x/3', 'x/1']);
+  });
   it('revise order: due and weakest first', () => {
     const progress: ProgressMap = {
       'a/1': { box: 5, dueAt: '2027-01-01T00:00:00.000Z', right: 5, wrong: 0, lastSeenAt: NOW },

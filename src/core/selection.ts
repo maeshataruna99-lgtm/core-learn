@@ -19,11 +19,12 @@ export function filterCards(cards: Card[], f: PracticeFilter): Card[] {
 
 const levelRank = (l: Level) => LEVELS.indexOf(l);
 
-/** Learn: beginner to advanced, flashcards before quiz cards, stable by id. */
+/** Learn: beginner to advanced, then the authored teaching order, then flashcards before quiz cards, stable by id. */
 export function learnOrder(cards: Card[]): Card[] {
   return [...cards].sort(
     (a, b) =>
       levelRank(a.level) - levelRank(b.level) ||
+      (a.order ?? 1000) - (b.order ?? 1000) ||
       Number(b.type === 'flashcard') - Number(a.type === 'flashcard') ||
       a.id.localeCompare(b.id),
   );

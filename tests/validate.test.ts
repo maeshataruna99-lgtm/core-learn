@@ -22,6 +22,18 @@ describe('content validator', () => {
     expect(validateCards([mcq({ docsUrl: 'not a url' })])[0]).toMatch(/docsUrl/);
     expect(validateCards([mcq({ track: 'nope' })]).join()).toMatch(/unknown track/);
   });
+  it('requires both languages in a primer, on beginner cards only', () => {
+    const primer = { en: 'Basics.', id: 'Dasar.' };
+    expect(validateCards([mcq({ primer })])).toEqual([]);
+    expect(validateCards([mcq({ primer: { en: 'Basics.', id: ' ' } })])[0]).toMatch(/both en and id/);
+    expect(validateCards([mcq({ primer: { en: 'Same', id: 'Same' } })])[0]).toMatch(/identical/);
+    expect(validateCards([mcq({ primer, level: 'advanced' })])[0]).toMatch(/only for beginner/);
+  });
+  it('gives every shipped beginner foundation card a primer', () => {
+    const foundations = allCards.filter((c) => c.id.includes('/foundations/') || /\/(spring-basics|layers|jpa-basics|jpql)\//.test(c.id));
+    expect(foundations.length).toBeGreaterThan(60);
+    expect(foundations.filter((c) => !c.primer).map((c) => c.id)).toEqual([]);
+  });
   it('checks bugspot line range', () => {
     const bug = { type: 'bugspot', language: 'ts', code: 'a\nb', buggyLines: [3], question: undefined, options: undefined };
     expect(validateCards([mcq(bug)]).join()).toMatch(/outside 1\.\.2/);

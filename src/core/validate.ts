@@ -20,6 +20,11 @@ export function validateCards(cards: Card[]): string[] {
     if (!TRACKS.includes(c.track)) err(`unknown track "${c.track}"`);
     if (!LEVELS.includes(c.level)) err(`unknown level "${c.level}"`);
     if (!c.explanation?.trim()) err('empty explanation');
+    if (c.primer) {
+      if (!c.primer.en?.trim() || !c.primer.id?.trim()) err('primer needs both en and id text');
+      else if (c.primer.en.trim() === c.primer.id.trim()) err('primer en and id are identical (untranslated?)');
+      if (c.level !== 'beginner') err('primer is only for beginner cards');
+    }
     if (c.docsUrl) {
       try {
         const u = new URL(c.docsUrl);
