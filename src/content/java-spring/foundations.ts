@@ -45,7 +45,7 @@ export const cards: Card[] = [
     front: 'What is the IoC container (ApplicationContext)?',
     back: 'The part of Spring that creates the beans, connects them to each other (dependency injection) and manages their lifecycle. You describe what you need with annotations; the container does the construction.',
     explanation: 'In Spring Boot the container is started by SpringApplication.run(...), which scans your classes and builds all beans before the application begins serving requests.',
-    docsUrl: `${fw}/core/beans/introduction.html`,
+    docsUrl: `${fw}/core/beans/basics.html`,
   },
   {
     ...base, topic: 'spring-basics', id: 'java-spring/spring-basics/dependency-injection', type: 'mcq', tags: ['di', 'interview'],
@@ -108,8 +108,8 @@ export const cards: Card[] = [
       'Spring Boot cannot have more than one package',
     ],
     answerIndex: 0,
-    explanation: '@SpringBootApplication scans from its own package downward. Move the class under com.shop.app, or widen the scan with @ComponentScan or scanBasePackages.',
-    docsUrl: `${fw}/core/beans/classpath-scanning.html`,
+    explanation: '@SpringBootApplication scans from its own package downward, which is why the main class belongs in a root package. Move the class under com.shop.app, or widen the scan with @ComponentScan or scanBasePackages.',
+    docsUrl: 'https://docs.spring.io/spring-boot/reference/using/structuring-your-code.html',
   },
   {
     ...base, topic: 'spring-basics', id: 'java-spring/spring-basics/singleton-bean', type: 'mcq', tags: ['scope'],
@@ -129,9 +129,9 @@ export const cards: Card[] = [
       en: 'A Spring Boot "starter" is one dependency that pulls in a whole set of matching libraries, so you do not pick versions one by one.',
       id: 'Sebuah "starter" Spring Boot adalah satu dependency yang menarik sekumpulan library yang cocok sekaligus, jadi kamu tidak perlu memilih versi satu per satu.',
     },
-    front: 'What does spring-boot-starter-web give you?',
-    back: 'An embedded web server (Tomcat), Spring MVC and JSON support (Jackson) with compatible versions, so one dependency is enough to build a REST API.',
-    explanation: 'Other common starters: spring-boot-starter-data-jpa (JPA + Hibernate), spring-boot-starter-validation and spring-boot-starter-test.',
+    front: 'What does the web starter give you (spring-boot-starter-web, renamed spring-boot-starter-webmvc in Spring Boot 4)?',
+    back: 'An embedded web server (Tomcat by default) and Spring MVC with compatible versions, so one dependency is enough to build a REST API. JSON support through Jackson comes along in a typical setup.',
+    explanation: 'Older projects still use the name spring-boot-starter-web. Other common starters: spring-boot-starter-data-jpa (JPA + Hibernate), spring-boot-starter-validation and spring-boot-starter-test.',
     docsUrl: 'https://docs.spring.io/spring-boot/reference/using/build-systems.html#using.build-systems.starters',
   },
   {
@@ -200,7 +200,7 @@ export const cards: Card[] = [
     ],
     answerIndex: 0,
     explanation: 'Separation of concerns. The service depends on a repository interface only, so you can mock it in a unit test or change the storage without rewriting business rules.',
-    docsUrl: 'https://docs.spring.io/spring-data/commons/reference/repositories/core-concepts.html',
+    docsUrl: 'https://martinfowler.com/eaaCatalog/repository.html',
   },
   {
     ...base, topic: 'layers', id: 'java-spring/layers/dto-vs-entity', type: 'mcq', tags: ['dto', 'entity'],
@@ -247,7 +247,7 @@ export const cards: Card[] = [
     ],
     answerIndex: 0,
     explanation: 'JPA (spec) defines what to do. Hibernate (provider) does it, generating the SQL. Spring Data JPA reduces boilerplate: you declare an interface and it creates the repository implementation.',
-    docsUrl: `${data}/jpa.html`,
+    docsUrl: `${data}/repositories/create-instances.html`,
   },
   {
     ...base, topic: 'jpa-basics', id: 'java-spring/jpa-basics/what-is-orm', type: 'flashcard', tags: ['orm'],
@@ -285,14 +285,14 @@ export const cards: Card[] = [
     },
     question: 'You write `interface UserRepository extends JpaRepository<User, Long> {}`. Which methods do you get without writing any code?',
     options: [
-      'save, findById, findAll, deleteById, count and more',
+      'save, findById, findAll, delete, count and more',
       'Only findAll',
       'None until you implement them',
       'Only methods whose names start with get',
     ],
     answerIndex: 0,
     explanation: 'The two generic types are the entity (User) and the type of its id (Long). Spring creates the implementation at startup and registers it as a bean you can inject.',
-    docsUrl: `${data}/repositories/core-concepts.html`,
+    docsUrl: `${data}/jpa/getting-started.html`,
   },
   {
     ...base, topic: 'jpa-basics', id: 'java-spring/jpa-basics/many-to-one', type: 'mcq', tags: ['relationships'],
@@ -331,8 +331,8 @@ export const cards: Card[] = [
     },
     front: 'What is JPQL?',
     back: 'Jakarta Persistence Query Language: an object-oriented query language defined by JPA. You query entities and their fields (FROM User u WHERE u.email = :email), not tables and columns, and the provider translates it to SQL for your database.',
-    explanation: 'Because it names entities, a JPQL query keeps working if you rename a table or switch databases, as long as the mapping is updated.',
-    docsUrl: `${data}/jpa/query-methods.html#jpa.query-methods.at-query`,
+    explanation: 'Because it names entities, a JPQL query keeps working if you rename a table or switch databases, as long as the mapping is updated. The Hibernate query language guide says tables and columns cannot be referenced directly in HQL or JPQL.',
+    docsUrl: 'https://docs.hibernate.org/orm/current/querylanguage/html_single/Hibernate_Query_Language.html',
   },
   {
     ...base, topic: 'jpql', id: 'java-spring/jpql/jpql-vs-sql', type: 'mcq', tags: ['jpql', 'sql'],
@@ -349,7 +349,7 @@ export const cards: Card[] = [
     ],
     answerIndex: 0,
     explanation: 'JPQL is database-independent and uses Java names (case-sensitive for entity and field names). SQL is tied to the schema and the vendor\'s dialect.',
-    docsUrl: `${data}/jpa/query-methods.html#jpa.query-methods.at-query`,
+    docsUrl: 'https://docs.hibernate.org/orm/current/querylanguage/html_single/Hibernate_Query_Language.html',
   },
   {
     ...base, topic: 'jpql', id: 'java-spring/jpql/query-annotation', type: 'flashcard', tags: ['jpql', 'spring-data'],
@@ -386,8 +386,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE u.email = :email")
     Optional<User> findByEmail(@Param("email") String email);
 }`,
-    explanation: 'JPQL refers to the entity name User, not the table name users. Using the table name fails at startup with "users is not mapped". Use nativeQuery = true if you really want table names.',
-    docsUrl: `${data}/jpa/query-methods.html#jpa.query-methods.at-query`,
+    explanation: 'JPQL refers to the entity name User, not the table name users, because tables and columns cannot be referenced directly. Spring Data validates @Query at startup, so the application fails to start with an error such as "users is not mapped" or "could not resolve root entity". Use nativeQuery = true if you really want table names.',
+    docsUrl: 'https://docs.hibernate.org/orm/current/querylanguage/html_single/Hibernate_Query_Language.html',
   },
   {
     ...base, topic: 'jpql', id: 'java-spring/jpql/native-query', type: 'mcq', tags: ['native-query'],
@@ -397,13 +397,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     },
     question: 'What does `@Query(value = "SELECT * FROM users WHERE email = ?1", nativeQuery = true)` do differently from a JPQL query?',
     options: [
-      'It sends your SQL as written to the database, using table and column names',
+      'It runs your SQL against the database, using table and column names',
       'It converts the query to JPQL automatically',
       'It disables transactions',
       'It caches the result forever',
     ],
     answerIndex: 0,
-    explanation: 'Native queries use real SQL, so they are tied to your database vendor. Prefer JPQL or derived queries first, and use native SQL only when you need it.',
+    explanation: 'Native queries use real SQL, so they are tied to your database vendor (Spring Data may still adjust a simple one for paging and sorting). Prefer JPQL or derived queries first, and use native SQL only when you need it.',
     docsUrl: `${data}/jpa/query-methods.html#jpa.query-methods.at-query`,
   },
   {
