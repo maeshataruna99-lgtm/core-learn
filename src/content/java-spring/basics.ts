@@ -39,6 +39,12 @@ public User create(@RequestBody CreateUser body) {
     return service.create(body);
 }`,
     buggyLines: [4],
+    fixedCode: `public record CreateUser(@NotBlank String name, @Email String email) {}
+
+@PostMapping("/users")
+public User create(@Valid @RequestBody CreateUser body) {
+    return service.create(body);
+}`,
     explanation: 'Bean Validation annotations on the record do nothing unless the parameter is annotated with @Valid (or @Validated). Invalid bodies reach the service.',
     docsUrl: 'https://docs.spring.io/spring-framework/reference/core/validation/beanvalidation.html',
   },

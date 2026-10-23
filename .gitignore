@@ -1,3 +1,4 @@
 node_modules
 dist
 *.local
+.verify-tmp

@@ -87,6 +87,11 @@ export class CreateUserDto {
   name: string;
 }`,
     buggyLines: [3, 4],
+    fixedCode: `// main.ts: app.useGlobalPipes(new ValidationPipe({ whitelist: true }))
+export class CreateUserDto {
+  @IsEmail() email!: string;
+  @IsString() name!: string;
+}`,
     explanation: 'With whitelist: true every property without a class-validator decorator is stripped, so the handler receives an empty object. Decorate each field, for example @IsEmail() and @IsString().',
     source: { repo: light },
     docsUrl: `${nest}/techniques/validation#stripping-properties`,

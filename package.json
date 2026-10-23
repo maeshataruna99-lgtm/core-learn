@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
     "lint": "eslint .",
-    "validate": "node scripts/validate.ts && node scripts/verify-output.ts",
+    "validate": "node scripts/validate.ts && node scripts/verify-output.ts && node scripts/verify-bugs.ts",
     "test": "vitest run"
   },
   "dependencies": {

@@ -137,6 +137,29 @@ for (const o of orders) {
   result.push({ ...o, customer });
 }`,
     buggyLines: [4],
+    fixedCode: `const orders = await prisma.order.findMany({ include: { customer: true } });
+const result = [];
+for (const o of orders) {
+  const customer = o.customer;
+  result.push({ ...o, customer });
+}`,
+    proof: {
+      harness: `let queries = 0;
+const rows = [1, 2, 3].map((id) => ({ id, customerId: id }));
+const prisma = {
+  order: {
+    findMany: async (args) => {
+      queries++;
+      return rows.map((o) => (args?.include?.customer ? { ...o, customer: { id: o.customerId } } : o));
+    },
+  },
+  customer: { findUnique: async ({ where }) => { queries++; return { id: where.id }; } },
+};
+/* CODE_HERE */
+console.log(queries);`,
+      buggyOutput: '4',
+      fixedOutput: '1',
+    },
     explanation: 'One query per order is the N+1 pattern: 1 for orders plus N for customers. Load them together with include: { customer: true }, or fetch with findMany({ where: { id: { in: ids } } }) and join in memory.',
     source: { repo: 'maeshataruna99-lgtm/core-forge-light' },
     docsUrl: 'https://www.prisma.io/docs/orm/prisma-client/queries/relation-queries',
@@ -174,6 +197,9 @@ SELECT id FROM p WHERE id > 2 ORDER BY id LIMIT 2;`,
 FROM products
 LIMIT 20 OFFSET 40;`,
     buggyLines: [3],
+    fixedCode: `SELECT id, name
+FROM products
+ORDER BY id LIMIT 20 OFFSET 40;`,
     explanation: 'Without ORDER BY the row order is undefined, so pages can repeat or skip rows. Always order by a unique, stable key such as ORDER BY id (add a tiebreaker when sorting by a non-unique column).',
     docsUrl: `${pg}/queries-limit.html`,
   },

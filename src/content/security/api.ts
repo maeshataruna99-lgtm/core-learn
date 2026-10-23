@@ -12,6 +12,11 @@ export const cards: Card[] = [
   );
 }`,
     buggyLines: [3],
+    fixedCode: `async function findByEmail(email: string) {
+  return prisma.$queryRaw(
+    Prisma.sql\`SELECT id, name FROM users WHERE email = \${email}\`,
+  );
+}`,
     explanation: 'Interpolating input into a raw query allows SQL injection (email = "x\' OR 1=1 --"). Use the tagged prisma.$queryRaw`... ${email}` form, which parameterizes values.',
     source: { repo: 'maeshataruna99-lgtm/core-forge-light' },
     docsUrl: 'https://www.prisma.io/docs/orm/prisma-client/using-raw-sql/raw-queries',

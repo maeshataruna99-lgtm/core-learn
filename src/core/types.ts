@@ -27,8 +27,19 @@ export interface OutputCard extends CardBase {
   /** Real stdout captured by running the code; checked by scripts/verify-output.ts. */
   verifiedOutput?: string;
 }
+export interface BugProof {
+  /** Runnable .mts module containing the marker comment "CODE_HERE" (see scripts/verify-bugs.ts) where the card code goes. */
+  harness: string;
+  /** Real stdout of harness+code, and of harness+fixedCode; they must differ. */
+  buggyOutput: string;
+  fixedOutput: string;
+}
 export interface BugSpot extends CardBase {
   type: 'bugspot'; language: string; code: string; buggyLines: number[];
+  /** The code with the bug fixed. Must change a buggy line and little else (checked by diff). */
+  fixedCode: string;
+  /** Optional behavioural proof, executed by scripts/verify-bugs.ts. */
+  proof?: BugProof;
 }
 export type Card = Flashcard | Mcq | OutputCard | BugSpot;
 export type CardType = Card['type'];

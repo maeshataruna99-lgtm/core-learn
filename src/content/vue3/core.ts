@@ -12,6 +12,20 @@ export const cards: Card[] = [
 
 watch(user.name, (name) => save(name));`,
     buggyLines: [3],
+    fixedCode: `const user = reactive({ name: 'Ada' });
+
+watch(() => user.name, (name) => save(name));`,
+    proof: {
+      harness: `import { reactive, watch, nextTick } from 'vue';
+const saved = [];
+const save = (n) => saved.push(n);
+/* CODE_HERE */
+user.name = 'Bob';
+await nextTick();
+console.log(saved.join(','));`,
+      buggyOutput: '',
+      fixedOutput: 'Bob',
+    },
     explanation: 'user.name is read once and passes a plain string, which is not a reactive source. Pass a getter: watch(() => user.name, ...).',
     docsUrl: `${vue}/guide/essentials/watchers.html#watch-source-types`,
   },
@@ -27,6 +41,14 @@ const count = ref(0);
   <button @click="count++">{{ count.value }}</button>
 </template>`,
     buggyLines: [7],
+    fixedCode: `<script setup lang="ts">
+import { ref } from 'vue';
+const count = ref(0);
+</script>
+
+<template>
+  <button @click="count++">{{ count }}</button>
+</template>`,
     explanation: 'Top-level refs are unwrapped automatically in templates, so count.value is undefined there. Write {{ count }}. Use .value only in script.',
     docsUrl: `${vue}/guide/essentials/reactivity-fundamentals.html#ref-unwrapping-in-templates`,
   },
@@ -98,6 +120,14 @@ function inc() {
 }
 </script>`,
     buggyLines: [5],
+    fixedCode: `<script setup lang="ts">
+const props = defineProps<{ count: number }>();
+const emit = defineEmits<{ 'update:count': [value: number] }>();
+
+function inc() {
+  emit('update:count', props.count + 1);
+}
+</script>`,
     explanation: 'Props are readonly; Vue warns and the parent value is not changed. Emit an event (or use defineModel) and let the parent update its state.',
     docsUrl: `${vue}/guide/components/props.html#one-way-data-flow`,
   },

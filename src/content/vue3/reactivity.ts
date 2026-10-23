@@ -23,6 +23,22 @@ function inc() {
 }
 // the template renders {{ count }}`,
     buggyLines: [4],
+    fixedCode: `import { reactive, toRefs } from 'vue';
+
+const state = reactive({ count: 0 });
+const { count } = toRefs(state);
+
+function inc() {
+  state.count++;
+}
+// the template renders {{ count }}`,
+    proof: {
+      harness: `/* CODE_HERE */
+inc();
+console.log(state.count, typeof count === 'object' ? count.value : count);`,
+      buggyOutput: '1 0',
+      fixedOutput: '1 1',
+    },
     explanation: 'Destructuring copies the number out of the reactive object, so count never updates. Use toRefs(state) or read state.count directly.',
     docsUrl: 'https://vuejs.org/api/reactivity-utilities.html#torefs',
   },

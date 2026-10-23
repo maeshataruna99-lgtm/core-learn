@@ -45,6 +45,11 @@ async getInvoice(@Param('id') id: string) {
   return this.prisma.invoice.findUnique({ where: { id } });
 }`,
     buggyLines: [4],
+    fixedCode: `@Get('invoices/:id')
+@UseGuards(AuthGuard)
+async getInvoice(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
+  return this.prisma.invoice.findFirst({ where: { id, companyId: req.user.companyId } });
+}`,
     explanation: 'Authentication passes, but nothing checks that the invoice belongs to the caller\'s company. That is Broken Object Level Authorization (OWASP API1). Scope the query: where: { id, companyId: req.user.companyId }.',
     source: { repo: light, path: 'apps/api/src/company/membership/company-admin.guard.ts' },
     docsUrl: `${owasp}/0xa1-broken-object-level-authorization/`,
@@ -135,6 +140,11 @@ download(@Param('name') name: string, @Res() res: Response) {
   return res.sendFile(file);
 }`,
     buggyLines: [3],
+    fixedCode: `@Get('files/:name')
+download(@Param('name') name: string, @Res() res: Response) {
+  const file = resolve(UPLOAD_DIR, basename(name));
+  return res.sendFile(file);
+}`,
     explanation: 'A name such as ../../etc/passwd (URL-encoded) escapes UPLOAD_DIR. Resolve the path and verify it still starts with the upload directory, or look files up by an id that maps to a stored path.',
     docsUrl: 'https://owasp.org/www-community/attacks/Path_Traversal',
   },
@@ -177,6 +187,10 @@ download(@Param('name') name: string, @Res() res: Response) {
   credentials: true,
 });`,
     buggyLines: [2],
+    fixedCode: `app.enableCors({
+  origin: ['https://app.example.com'],
+  credentials: true,
+});`,
     explanation: 'origin: true reflects whatever Origin the request sends, and credentials: true then lets any website call the API with the user\'s cookies. List the exact allowed origins.',
     docsUrl: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/CORS',
   },
@@ -234,6 +248,12 @@ const SECRET = 'supersecret123';
 export const issue = (userId: string) =>
   sign({ sub: userId }, SECRET, { expiresIn: '15m' });`,
     buggyLines: [3],
+    fixedCode: `import { sign } from 'jsonwebtoken';
+
+const SECRET = process.env.JWT_SECRET!;
+
+export const issue = (userId: string) =>
+  sign({ sub: userId }, SECRET, { expiresIn: '15m' });`,
     explanation: 'A secret in source code ends up in git history, logs and builds. Read it from the environment or a secret manager, and rotate it if it was ever committed.',
     docsUrl: `${cheat}/Secrets_Management_Cheat_Sheet.html`,
   },
@@ -245,6 +265,22 @@ export const issue = (userId: string) =>
   return this.auth.verify(dto.email, dto.password);
 }`,
     buggyLines: [2],
+    fixedCode: `async login(dto: LoginDto) {
+  this.logger.log(\`login attempt: \${dto.email}\`);
+  return this.auth.verify(dto.email, dto.password);
+}`,
+    proof: {
+      harness: `const logs = [];
+class AuthController {
+  logger = { log: (m) => logs.push(m) };
+  auth = { verify: async () => true };
+  /* CODE_HERE */
+}
+await new AuthController().login({ email: 'a@x.com', password: 'hunter2' });
+console.log(logs.some((l) => l.includes('hunter2')));`,
+      buggyOutput: 'true',
+      fixedOutput: 'false',
+    },
     explanation: 'Logging the whole DTO writes plaintext passwords to the logs. Log identifiers only (email or user id), never credentials, tokens or full request bodies.',
     docsUrl: `${cheat}/Logging_Cheat_Sheet.html#data-to-exclude`,
   },

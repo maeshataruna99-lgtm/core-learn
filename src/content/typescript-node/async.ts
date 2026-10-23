@@ -26,6 +26,20 @@ console.log('d');`,
   return users;
 }`,
     buggyLines: [3],
+    fixedCode: `async function loadAll(ids: string[]) {
+  const users: User[] = [];
+  for (const id of ids) {
+    users.push(await fetchUser(id));
+  }
+  return users;
+}`,
+    proof: {
+      harness: `const fetchUser = async (id) => { await new Promise((r) => setTimeout(r, 5)); return { id }; };
+/* CODE_HERE */
+console.log((await loadAll(['a', 'b'])).length);`,
+      buggyOutput: '0',
+      fixedOutput: '2',
+    },
     explanation: 'forEach ignores the promises its async callback returns, so loadAll returns before any user is pushed. Use Promise.all(ids.map(fetchUser)) or a for...of loop with await.',
   },
   {

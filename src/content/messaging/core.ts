@@ -146,6 +146,26 @@ console.log(log.slice(offset).join(''));`,
   },
 });`,
     buggyLines: [3],
+    fixedCode: `await consumer.run({
+  eachMessage: async ({ message, partition, topic }) => {
+    await handle(message);
+    await consumer.commitOffsets([{ topic, partition, offset: String(Number(message.offset) + 1) }]);
+  },
+});`,
+    proof: {
+      harness: `const committed = [];
+const handle = async () => { throw new Error('boom'); };
+let eachMessage;
+const consumer = {
+  commitOffsets: async (offsets) => { committed.push(offsets); },
+  run: async (config) => { eachMessage = config.eachMessage; },
+};
+/* CODE_HERE */
+try { await eachMessage({ message: { offset: '5' }, partition: 0, topic: 't' }); } catch { /* handler failed */ }
+console.log(committed.length);`,
+      buggyOutput: '1',
+      fixedOutput: '0',
+    },
     explanation: 'Committing before handling gives at-most-once: if handle() crashes, the offset is already past the message and it is lost. Commit after successful processing (at-least-once) and make handle idempotent.',
     docsUrl: `${kafka}/#impl_offsettracking`,
   },

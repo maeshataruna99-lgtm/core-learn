@@ -1,3 +1,4 @@
+import { checkFix } from './diff.ts';
 import { LEVELS, TRACKS } from './types.ts';
 import type { Card } from './types.ts';
 
@@ -43,6 +44,12 @@ export function validateCards(cards: Card[]): string[] {
         const lines = c.code.split('\n').length;
         if (c.buggyLines.length === 0) err('buggyLines is empty');
         for (const n of c.buggyLines) if (!Number.isInteger(n) || n < 1 || n > lines) err(`buggy line ${n} outside 1..${lines}`);
+        if (!c.fixedCode?.trim()) err('bugspot needs fixedCode');
+        else {
+          const problem = checkFix(c.code, c.fixedCode, c.buggyLines);
+          if (problem) err(problem);
+        }
+        if (c.proof && c.proof.buggyOutput.trim() === c.proof.fixedOutput.trim()) err('proof outputs must differ');
         break;
       }
     }

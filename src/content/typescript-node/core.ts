@@ -42,6 +42,20 @@ console.log(e instanceof AppError, e instanceof Error, e.name);`,
   }
 }`,
     buggyLines: [4, 5],
+    fixedCode: `async function saveUser(user: User) {
+  try {
+    await repo.save(user);
+  } catch (e) {
+    throw e;
+  }
+}`,
+    proof: {
+      harness: `const repo = { save: async () => { throw new Error('db down'); } };
+/* CODE_HERE */
+try { await saveUser({}); console.log('ok'); } catch (e) { console.log('failed: ' + e.message); }`,
+      buggyOutput: 'ok',
+      fixedOutput: 'failed: db down',
+    },
     explanation: 'An empty catch hides failures: the caller thinks the save worked. Handle the error, log it with context, or rethrow it.',
     docsUrl: `${mdn}/Reference/Statements/try...catch`,
   },
@@ -119,6 +133,18 @@ console.log(fns.map((f) => f()).join(','));`,
   return false;
 }`,
     buggyLines: [2],
+    fixedCode: `function canDelete(role: string) {
+  if (role === 'admin') {
+    return true;
+  }
+  return false;
+}`,
+    proof: {
+      harness: `/* CODE_HERE */
+console.log(canDelete('member'));`,
+      buggyOutput: 'true',
+      fixedOutput: 'false',
+    },
     explanation: 'A single = assigns "admin" to role and the condition is always truthy, so everyone can delete. Compare with ===.',
     docsUrl: `${mdn}/Reference/Operators/Strict_equality`,
   },

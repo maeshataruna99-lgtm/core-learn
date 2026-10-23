@@ -37,6 +37,17 @@ export class AuthGuard implements CanActivate {
   }
 }`,
     buggyLines: [6],
+    fixedCode: `@Injectable()
+export class AuthGuard implements CanActivate {
+  constructor(private readonly auth: AuthService) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    const req = context.switchToHttp().getRequest();
+    const token = req.headers.authorization;
+    const identity = this.auth.verifyAccess(token?.replace('Bearer ', '') ?? '');
+    return identity !== null;
+  }
+}`,
     explanation: 'Checking only that a header exists lets any string through. The guard must verify the token (signature, expiry) and attach the user to the request.',
     source: guardSource,
     docsUrl: 'https://docs.nestjs.com/guards#authorization-guard',
