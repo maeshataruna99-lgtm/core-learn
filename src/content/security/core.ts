@@ -66,7 +66,7 @@ async getInvoice(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
     answerIndex: 0,
     explanation: 'A self-contained JWT cannot be revoked before it expires, so you limit the damage window and keep revocation on the refresh path.',
     source: { repo: light, path: 'apps/api/src/auth/auth.service.ts' },
-    docsUrl: `${cheat}/JSON_Web_Token_for_Java_Cheat_Sheet.html`,
+    docsUrl: `${cheat}/REST_Security_Cheat_Sheet.html`,
   },
   {
     ...base, topic: 'authn-authz', id: 'security/authn-authz/rbac-vs-ownership', type: 'flashcard', level: 'intermediate', tags: ['rbac', 'authorization'],
@@ -87,7 +87,7 @@ async getInvoice(@Param('id') id: string, @Req() req: AuthenticatedRequest) {
     ],
     answerIndex: 0,
     explanation: 'Decoding is not verifying. Historic attacks used alg: none or swapped RS256 for HS256, so the verifier must pin the algorithm.',
-    docsUrl: `${cheat}/JSON_Web_Token_for_Java_Cheat_Sheet.html`,
+    docsUrl: `${cheat}/REST_Security_Cheat_Sheet.html`,
   },
   // ---- password-storage (more) ----
   {

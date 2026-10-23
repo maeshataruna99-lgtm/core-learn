@@ -66,7 +66,7 @@ public class Main {
     ...base, topic: 'spring-boot-basics', id: 'java-spring/spring-boot-basics/spring-boot-application', type: 'mcq', level: 'beginner', tags: ['annotations'],
     question: '@SpringBootApplication is a shortcut for which three annotations?',
     options: [
-      '@Configuration, @EnableAutoConfiguration, @ComponentScan',
+      '@SpringBootConfiguration (a @Configuration), @EnableAutoConfiguration, @ComponentScan',
       '@Controller, @Service, @Repository',
       '@Bean, @Autowired, @Component',
       '@Transactional, @Cacheable, @Async',
@@ -148,7 +148,7 @@ public class Main {
     options: ['LAZY', 'EAGER', 'IMMEDIATE', 'BATCH'],
     answerIndex: 0,
     explanation: 'To-many associations are lazy by default; to-one (@ManyToOne, @OneToOne) are eager by default. Touching a lazy collection after the session closes throws LazyInitializationException.',
-    docsUrl: 'https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/onetomany',
+    docsUrl: 'https://jakarta.ee/specifications/persistence/3.2/apidocs/jakarta.persistence/jakarta/persistence/OneToMany.html',
   },
   {
     ...base, topic: 'jpa', id: 'java-spring/jpa/n-plus-one-entity-graph', type: 'mcq', level: 'advanced', tags: ['jpa', 'performance'],
@@ -183,7 +183,7 @@ public class Main {
     options: ['@NotBlank', '@NotNull', '@NotEmpty', '@Size(min = 1)'],
     answerIndex: 0,
     explanation: '@NotNull only rejects null. @NotEmpty also rejects "". @NotBlank also rejects strings of only whitespace.',
-    docsUrl: 'https://jakarta.ee/specifications/bean-validation/3.1/apidocs/jakarta.validation/jakarta/validation/constraints/notblank',
+    docsUrl: 'https://jakarta.ee/specifications/bean-validation/3.0/apidocs/jakarta/validation/constraints/NotBlank.html',
   },
   {
     ...base, topic: 'validation', id: 'java-spring/validation/validated-path', type: 'flashcard', level: 'intermediate', tags: ['validation'],

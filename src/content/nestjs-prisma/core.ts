@@ -181,6 +181,6 @@ export class CreateUserDto {
     ],
     answerIndex: 0,
     explanation: 'Applied migrations are history. Prisma stores a checksum, and editing the file causes drift errors. Always move forward with a new migration.',
-    docsUrl: `${prisma}/prisma-migrate/understand-prisma-migrate/mental-model`,
+    docsUrl: `${prisma}/prisma-migrate/understanding-prisma-migrate/mental-model`,
   },
 ];

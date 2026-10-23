@@ -20,7 +20,7 @@ export const cards: Card[] = [
   {
     ...base, id: 'sql-db/n-plus-one/what-is', topic: 'n-plus-one', type: 'flashcard', level: 'intermediate', tags: ['orm', 'performance'],
     front: 'What is the N+1 query problem and how do you fix it in Prisma?',
-    back: 'One query loads N rows, then one more query per row loads a relation (N+1 total). Fix with include/select on the first query, or a single batched findMany with `in`.',
+    back: 'One query loads N rows, then one more query per row loads a relation (N+1 total). Fix by loading the relation in the first query (include, or a nested select of the relation), or with a single batched findMany using an `in` filter.',
     explanation: 'Check for it by logging queries: the same SELECT repeated with different ids is the giveaway.',
     docsUrl: 'https://www.prisma.io/docs/orm/prisma-client/queries/relation-queries',
   },

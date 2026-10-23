@@ -99,7 +99,7 @@ const count = ref(0);
     options: ['onUnmounted (or onBeforeUnmount)', 'onUpdated', 'It is removed automatically', 'In the template'],
     answerIndex: 0,
     explanation: 'Listeners and timers outlive the component unless you clean them up, which causes leaks and updates to unmounted components.',
-    docsUrl: `${vue}/guide/essentials/lifecycle.html`,
+    docsUrl: `${vue}/api/composition-api-lifecycle.html`,
   },
   // ---- props-emits (more) ----
   {

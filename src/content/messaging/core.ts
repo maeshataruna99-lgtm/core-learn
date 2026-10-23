@@ -111,7 +111,7 @@ console.log(total);`,
     ],
     answerIndex: 0,
     explanation: 'The queue must be declared durable and the message published as persistent. Add publisher confirms to know the broker really stored it.',
-    docsUrl: `${rmq}/persistence-conf`,
+    docsUrl: 'https://www.rabbitmq.com/tutorials/tutorial-two-javascript#message-durability',
   },
   // ---- kafka ----
   {
