@@ -3,7 +3,6 @@ import type { Card } from '../../core/types.ts';
 // No repo of mine uses a broker yet, so these cards deliberately have no `source`.
 const base = { track: 'messaging' } as const;
 const rmq = 'https://www.rabbitmq.com/docs';
-const kafka = 'https://kafka.apache.org/documentation';
 
 export const cards: Card[] = [
   // ---- why-brokers ----
@@ -113,104 +112,7 @@ console.log(total);`,
     explanation: 'The queue must be declared durable and the message published as persistent. Add publisher confirms to know the broker really stored it.',
     docsUrl: 'https://www.rabbitmq.com/tutorials/tutorial-two-javascript#message-durability',
   },
-  // ---- kafka ----
-  {
-    ...base, topic: 'kafka', id: 'messaging/kafka/consumer-group', type: 'mcq', level: 'intermediate', tags: ['kafka', 'consumer-groups'],
-    question: 'A topic has 3 partitions and one consumer group has 5 consumers. How many consumers receive messages?',
-    options: ['3, because each partition is read by one consumer in the group', '5', '1', '15'],
-    answerIndex: 0,
-    explanation: 'Within a group each partition is assigned to at most one consumer, so parallelism is capped by the partition count. Extra consumers sit idle as standbys.',
-    docsUrl: `${kafka}/#intro_consumers`,
-  },
-  {
-    ...base, topic: 'kafka', id: 'messaging/kafka/offset-replay', type: 'output', level: 'intermediate', tags: ['kafka', 'offsets'],
-    language: 'js',
-    code: `const log = ['a', 'b', 'c', 'd'];
-let offset = 2;
-console.log(log.slice(offset).join(''));
-offset = 0; // seek back to the beginning to replay
-console.log(log.slice(offset).join(''));`,
-    options: ['cd then abcd', 'ab then abcd', 'cd then cd', 'abcd then cd'],
-    answerIndex: 0,
-    verifiedOutput: 'cd\nabcd',
-    explanation: 'A Kafka partition is an append-only log and a consumer is just an offset into it. Resetting the offset replays history, which a classic queue (messages deleted on ack) cannot do.',
-    docsUrl: `${kafka}/#intro_concepts_and_terms`,
-  },
-  {
-    ...base, topic: 'kafka', id: 'messaging/kafka/commit-before-process', type: 'bugspot', level: 'advanced', tags: ['kafka', 'delivery'],
-    language: 'ts',
-    code: `await consumer.run({
-  eachMessage: async ({ message, partition, topic }) => {
-    await consumer.commitOffsets([{ topic, partition, offset: String(Number(message.offset) + 1) }]);
-    await handle(message);
-  },
-});`,
-    buggyLines: [3],
-    fixedCode: `await consumer.run({
-  eachMessage: async ({ message, partition, topic }) => {
-    await handle(message);
-    await consumer.commitOffsets([{ topic, partition, offset: String(Number(message.offset) + 1) }]);
-  },
-});`,
-    proof: {
-      harness: `const committed = [];
-const handle = async () => { throw new Error('boom'); };
-let eachMessage;
-const consumer = {
-  commitOffsets: async (offsets) => { committed.push(offsets); },
-  run: async (config) => { eachMessage = config.eachMessage; },
-};
-/* CODE_HERE */
-try { await eachMessage({ message: { offset: '5' }, partition: 0, topic: 't' }); } catch { /* handler failed */ }
-console.log(committed.length);`,
-      buggyOutput: '1',
-      fixedOutput: '0',
-    },
-    explanation: 'Committing before handling gives at-most-once: if handle() crashes, the offset is already past the message and it is lost. Commit after successful processing (at-least-once) and make handle idempotent.',
-    docsUrl: `${kafka}/#impl_offsettracking`,
-  },
-  {
-    ...base, topic: 'kafka', id: 'messaging/kafka/message-key', type: 'mcq', level: 'intermediate', tags: ['kafka', 'ordering'],
-    question: 'Events for the same order must be processed in order. What should you do when producing?',
-    options: [
-      'Use the order id as the message key so they land in the same partition',
-      'Use a random key for each event',
-      'Create one topic per event',
-      'Send them with different producers',
-    ],
-    answerIndex: 0,
-    explanation: 'The default partitioner hashes the key, and ordering is guaranteed only within a partition.',
-    docsUrl: `${kafka}/#intro_concepts_and_terms`,
-  },
-  {
-    ...base, topic: 'kafka', id: 'messaging/kafka/retention', type: 'flashcard', level: 'intermediate', tags: ['kafka', 'retention'],
-    front: 'Does Kafka delete a message once a consumer has read it?',
-    back: 'No. Messages stay until retention expires (by time or size), regardless of consumers. Each consumer group tracks its own offset, so many groups can read the same data independently.',
-    explanation: 'This is the core difference from a work queue like RabbitMQ.',
-    docsUrl: `${kafka}/#design_filesystem`,
-  },
-  {
-    ...base, topic: 'kafka', id: 'messaging/kafka/log-compaction', type: 'mcq', level: 'advanced', tags: ['kafka', 'compaction'],
-    question: 'What does log compaction keep on a topic?',
-    options: [
-      'At least the latest value for each message key',
-      'Only the first message per partition',
-      'Messages younger than seven days',
-      'A single message per topic',
-    ],
-    answerIndex: 0,
-    explanation: 'Compaction suits changelog/state topics such as "current profile per user id", letting a new consumer rebuild state without reading the whole history.',
-    docsUrl: `${kafka}/#compaction`,
-  },
   // ---- choosing ----
-  {
-    ...base, topic: 'choosing', id: 'messaging/choosing/rabbitmq-vs-kafka', type: 'mcq', level: 'intermediate', tags: ['comparison'],
-    question: 'You need task queues with per-message routing, retries and dead-lettering for background jobs. Which fits better by default?',
-    options: ['RabbitMQ', 'Kafka', 'Neither; use cron', 'A relational table as a stream'],
-    answerIndex: 0,
-    explanation: 'RabbitMQ is a smart broker built for routing and work distribution. Kafka is a distributed log, best for high-throughput event streams, replay and multiple independent consumers.',
-    docsUrl: 'https://www.rabbitmq.com/tutorials/amqp-concepts',
-  },
   {
     ...base, topic: 'choosing', id: 'messaging/choosing/outbox-pattern', type: 'flashcard', level: 'advanced', tags: ['patterns', 'consistency'],
     front: 'What problem does the transactional outbox pattern solve?',
