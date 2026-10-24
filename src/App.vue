@@ -12,6 +12,7 @@ const links: { to: string; label: Key }[] = [
   { to: '/', label: 'nav.home' },
   { to: '/learn', label: 'nav.learn' },
   { to: '/practice', label: 'nav.practice' },
+  { to: '/wiki', label: 'nav.wiki' },
   { to: '/progress', label: 'nav.progress' },
   { to: '/settings', label: 'nav.settings' },
 ];

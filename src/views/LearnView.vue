@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import QuizRunner from '../components/QuizRunner.vue';
+import { useRoute } from 'vue-router';
 import { useStore } from '../composables/useStore.ts';
 import { filterCards, learnOrder } from '../core/selection.ts';
 import { TRACKS } from '../core/types.ts';
@@ -9,8 +10,12 @@ import { useT } from '../i18n/index.ts';
 
 const t = useT();
 const { cards } = useStore();
-const track = ref<Track | null>(null);
-const topic = ref<string | null>(null);
+// /learn?track=...&topic=... opens a topic directly (the Wiki links here); unknown values fall back to the picker.
+const route = useRoute();
+const qTrack = TRACKS.find((tr) => tr === route.query.track) ?? null;
+const qTopic = typeof route.query.topic === 'string' ? route.query.topic : null;
+const track = ref<Track | null>(qTrack);
+const topic = ref<string | null>(qTrack && qTopic && cards.some((c) => c.track === qTrack && c.topic === qTopic) ? qTopic : null);
 
 const tracksWithCards = computed(() => TRACKS.filter((tr) => cards.some((c) => c.track === tr)));
 const topics = computed(() => [...new Set(filterCards(cards, { tracks: track.value ? [track.value] : [] }).map((c) => c.topic))]);
