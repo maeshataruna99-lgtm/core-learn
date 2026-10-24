@@ -73,4 +73,6 @@ export interface Store {
   version: 1;
   progress: ProgressMap;
   settings: Settings;
+  /** Wiki term id -> ISO time the learner marked it "I understand". Added after v1 shipped, so migrate() fills it. */
+  understood: Record<string, string>;
 }

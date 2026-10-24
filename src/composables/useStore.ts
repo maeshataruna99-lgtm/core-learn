@@ -32,9 +32,15 @@ export function useStore() {
     replace(next: Store) {
       store.progress = pruneUnknown(next.progress, ids);
       store.settings = next.settings;
+      store.understood = next.understood;
     },
     reset() {
       store.progress = {};
+      store.understood = {};
+    },
+    toggleUnderstood(termId: string) {
+      if (store.understood[termId]) delete store.understood[termId];
+      else store.understood[termId] = new Date().toISOString();
     },
   };
 }
