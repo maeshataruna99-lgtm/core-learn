@@ -2,7 +2,7 @@ import { useStore } from '../composables/useStore.ts';
 
 // UI strings only. Card content and code stay in English.
 export const en = {
-  'nav.home': 'Home', 'nav.learn': 'Learn', 'nav.practice': 'Practice', 'nav.progress': 'Progress', 'nav.settings': 'Settings', 'nav.wiki': 'Wiki',
+  'nav.home': 'Home', 'nav.learn': 'Learn', 'nav.practice': 'Practice', 'nav.progress': 'Progress', 'nav.settings': 'Settings', 'nav.wiki': 'Wiki', 'nav.mycv': 'MyCV',
   'home.due': 'due today ({n} total)', 'home.streak': 'day streak', 'home.continue': 'Continue',
   'home.learn': 'Learn', 'home.learnText': 'Guided topics, beginner to advanced',
   'home.revise': 'Revise', 'home.reviseText': 'Due and weakest cards first',
@@ -51,13 +51,21 @@ export const en = {
   'wiki.cat.messaging': 'Messaging',
   'wiki.cat.architecture': 'Architecture',
   'wiki.cat.ops': 'Operations',
+  'wiki.cat.domain': 'Domain (hospital, finance)',
+  'mycv.title': 'MyCV', 'mycv.intro': 'Every point on my CV, with the terms, practice topics and interview questions behind it.',
+  'mycv.progress': '{done} of {total} CV points I can explain', 'mycv.back': '← My CV',
+  'mycv.sec.experience': 'Experience', 'mycv.sec.projects': 'Projects', 'mycv.sec.skills': 'Skills',
+  'mycv.cvSays': 'What my CV says', 'mycv.tellIt': 'How to tell it', 'mycv.learnFirst': 'Terms to know (Wiki)',
+  'mycv.terms': '{done}/{total} terms understood', 'mycv.questions': 'Likely interview questions',
+  'mycv.show': 'Show a good answer', 'mycv.hide': 'Hide answer',
+  'mycv.explain': 'I can explain this', 'mycv.explained': '✓ I can explain this',
   'pwa.update': 'A new version is available.', 'pwa.reload': 'Reload', 'pwa.offline': 'Ready to work offline.',
 } as const;
 
 export type Key = keyof typeof en;
 
 export const id: Record<Key, string> = {
-  'nav.home': 'Beranda', 'nav.learn': 'Belajar', 'nav.practice': 'Latihan', 'nav.progress': 'Progres', 'nav.settings': 'Pengaturan', 'nav.wiki': 'Wiki',
+  'nav.home': 'Beranda', 'nav.learn': 'Belajar', 'nav.practice': 'Latihan', 'nav.progress': 'Progres', 'nav.settings': 'Setelan', 'nav.wiki': 'Wiki', 'nav.mycv': 'MyCV',
   'home.due': 'jatuh tempo hari ini (total {n})', 'home.streak': 'hari beruntun', 'home.continue': 'Lanjutkan',
   'home.learn': 'Belajar', 'home.learnText': 'Topik terarah, dari pemula sampai mahir',
   'home.revise': 'Ulangi', 'home.reviseText': 'Kartu jatuh tempo dan terlemah dulu',
@@ -106,6 +114,14 @@ export const id: Record<Key, string> = {
   'wiki.cat.messaging': 'Messaging',
   'wiki.cat.architecture': 'Arsitektur',
   'wiki.cat.ops': 'Operasional',
+  'wiki.cat.domain': 'Domain (rumah sakit, keuangan)',
+  'mycv.title': 'MyCV', 'mycv.intro': 'Setiap poin di CV-ku, lengkap dengan istilah, topik latihan, dan pertanyaan wawancara di baliknya.',
+  'mycv.progress': '{done} dari {total} poin CV bisa kujelaskan', 'mycv.back': '← CV-ku',
+  'mycv.sec.experience': 'Pengalaman', 'mycv.sec.projects': 'Proyek', 'mycv.sec.skills': 'Keahlian',
+  'mycv.cvSays': 'Yang tertulis di CV-ku', 'mycv.tellIt': 'Cara menceritakannya', 'mycv.learnFirst': 'Istilah yang perlu dipahami (Wiki)',
+  'mycv.terms': '{done}/{total} istilah dipahami', 'mycv.questions': 'Pertanyaan wawancara yang mungkin muncul',
+  'mycv.show': 'Lihat contoh jawaban bagus', 'mycv.hide': 'Sembunyikan jawaban',
+  'mycv.explain': 'Saya bisa menjelaskan ini', 'mycv.explained': '✓ Saya bisa menjelaskan ini',
   'pwa.update': 'Versi baru tersedia.', 'pwa.reload': 'Muat ulang', 'pwa.offline': 'Siap digunakan secara offline.',
 };
 

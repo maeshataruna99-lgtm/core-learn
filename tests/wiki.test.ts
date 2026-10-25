@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { allCards } from '../src/content/index.ts';
 import { wikiEntries } from '../src/content/wiki/index.ts';
 import { emptyStore, migrate } from '../src/core/storage.ts';
+import { cvItems } from '../src/content/mycv/index.ts';
+import { cvKey, validateCv } from '../src/core/mycv.ts';
 import { quizPool, searchWiki, validateWiki } from '../src/core/wiki.ts';
 import type { WikiEntry } from '../src/core/wiki.ts';
 
@@ -20,7 +22,7 @@ describe('wiki data', () => {
     const ids = new Set(wikiEntries.map((x) => x.id));
     for (const id of ['java', 'jvm', 'spring-boot', 'jpa', 'hibernate', 'maven', 'rabbitmq', 'redis', 'postgresql', 'docker', 'nodejs',
       'typescript', 'nestjs', 'prisma', 'vue', 'rest-api', 'http', 'json', 'api', 'orm']) expect(ids.has(id), id).toBe(true);
-    expect(wikiEntries.length).toBeGreaterThanOrEqual(70);
+    expect(wikiEntries.length).toBeGreaterThanOrEqual(90);
     expect(ids.has('kafka')).toBe(false);
   });
   it('covers all 50 requested interview topics', () => {
@@ -86,5 +88,25 @@ describe('store migration for the wiki', () => {
     const s = migrate({ version: 1, progress: {}, understood: { redis: '2026-01-01T00:00:00.000Z', bad: 5 } });
     expect(s?.understood).toEqual({ redis: '2026-01-01T00:00:00.000Z' });
     expect(migrate({ version: 1, progress: {}, understood: [1] })?.understood).toEqual({});
+  });
+});
+
+describe('mycv data', () => {
+  const wikiIds = new Set(wikiEntries.map((x) => x.id));
+  it('ships valid CV points', () => {
+    expect(validateCv(cvItems, wikiIds, topics)).toEqual([]);
+    expect(cvItems.length).toBeGreaterThanOrEqual(10);
+  });
+  it('rejects bad CV points and contact details', () => {
+    const base = cvItems[0]!;
+    expect(validateCv([base, base], wikiIds, topics).join()).toMatch(/duplicate id/);
+    expect(validateCv([{ ...base, wiki: ['ghost'] }], wikiIds, topics).join()).toMatch(/does not exist/);
+    expect(validateCv([{ ...base, questions: [] }], wikiIds, topics).join()).toMatch(/at least one question/);
+    expect(validateCv([{ ...base, cv: { en: 'mail me at a@b.com', id: 'x' } }], wikiIds, topics).join()).toMatch(/contact/);
+    expect(validateCv([{ ...base, topics: [{ track: 'vue3', topic: 'nope' }] }], wikiIds, topics).join()).toMatch(/no cards/);
+  });
+  it('keys CV progress apart from wiki ids', () => {
+    expect(cvKey('x')).toBe('cv:x');
+    expect(wikiIds.has('cv:x')).toBe(false);
   });
 });

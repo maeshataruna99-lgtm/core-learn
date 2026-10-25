@@ -1,7 +1,7 @@
 import type { Track } from './types.ts';
 
 export const WIKI_CATEGORIES = [
-  'languages', 'frameworks', 'web', 'data', 'concurrency', 'caching', 'reliability', 'scaling', 'messaging', 'architecture', 'ops',
+  'languages', 'frameworks', 'web', 'data', 'concurrency', 'caching', 'reliability', 'scaling', 'messaging', 'architecture', 'ops', 'domain',
 ] as const;
 export type WikiCategory = (typeof WIKI_CATEGORIES)[number];
 
