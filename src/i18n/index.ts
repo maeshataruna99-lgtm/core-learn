@@ -2,7 +2,7 @@ import { useStore } from '../composables/useStore.ts';
 
 // UI strings only. Card content and code stay in English.
 export const en = {
-  'nav.home': 'Home', 'nav.learn': 'Learn', 'nav.practice': 'Practice', 'nav.progress': 'Progress', 'nav.settings': 'Settings', 'nav.wiki': 'Wiki', 'nav.mycv': 'MyCV',
+  'nav.home': 'Home', 'nav.learn': 'Learn', 'nav.practice': 'Practice', 'nav.progress': 'Progress', 'nav.settings': 'Settings', 'nav.wiki': 'Wiki', 'nav.mycv': 'MyCV', 'nav.focus': 'Focus',
   'home.due': 'due today ({n} total)', 'home.streak': 'day streak', 'home.continue': 'Continue',
   'home.learn': 'Learn', 'home.learnText': 'Guided topics, beginner to advanced',
   'home.revise': 'Revise', 'home.reviseText': 'Due and weakest cards first',
@@ -59,13 +59,19 @@ export const en = {
   'mycv.terms': '{done}/{total} terms understood', 'mycv.questions': 'Likely interview questions',
   'mycv.show': 'Show a good answer', 'mycv.hide': 'Hide answer',
   'mycv.explain': 'I can explain this', 'mycv.explained': '✓ I can explain this',
+  'focus.title': 'Focus: AI automation', 'focus.intro': 'My AI Operations Assistant project, part by part: what it is, how to tell it, the code behind it and the interview questions it invites.',
+  'focus.progress': '{done} of {total} parts I can explain', 'focus.back': '← Focus', 'focus.what': 'What it is', 'focus.code': 'See it in the code',
+  'focus.sim': 'Interview simulation', 'focus.simStart': 'Start interview simulation ({total} questions)', 'focus.simExit': 'Exit',
+  'focus.simProgress': 'Question {n} of {total}', 'focus.simDraft': 'Answer out loud or write it first (not saved)',
+  'focus.simOk': 'I could answer this', 'focus.simWeak': 'Needs practice', 'focus.simScore': '{ok} of {total} answered well',
+  'focus.simReview': 'Review these answers', 'focus.simRetryWeak': 'Practise these again', 'focus.simRestart': 'Restart the full simulation',
   'pwa.update': 'A new version is available.', 'pwa.reload': 'Reload', 'pwa.offline': 'Ready to work offline.',
 } as const;
 
 export type Key = keyof typeof en;
 
 export const id: Record<Key, string> = {
-  'nav.home': 'Beranda', 'nav.learn': 'Belajar', 'nav.practice': 'Latihan', 'nav.progress': 'Progres', 'nav.settings': 'Setelan', 'nav.wiki': 'Wiki', 'nav.mycv': 'MyCV',
+  'nav.home': 'Beranda', 'nav.learn': 'Belajar', 'nav.practice': 'Latihan', 'nav.progress': 'Progres', 'nav.settings': 'Setelan', 'nav.wiki': 'Wiki', 'nav.mycv': 'MyCV', 'nav.focus': 'Fokus',
   'home.due': 'jatuh tempo hari ini (total {n})', 'home.streak': 'hari beruntun', 'home.continue': 'Lanjutkan',
   'home.learn': 'Belajar', 'home.learnText': 'Topik terarah, dari pemula sampai mahir',
   'home.revise': 'Ulangi', 'home.reviseText': 'Kartu jatuh tempo dan terlemah dulu',
@@ -122,6 +128,12 @@ export const id: Record<Key, string> = {
   'mycv.terms': '{done}/{total} istilah dipahami', 'mycv.questions': 'Pertanyaan wawancara yang mungkin muncul',
   'mycv.show': 'Lihat contoh jawaban bagus', 'mycv.hide': 'Sembunyikan jawaban',
   'mycv.explain': 'Saya bisa menjelaskan ini', 'mycv.explained': '✓ Saya bisa menjelaskan ini',
+  'focus.title': 'Fokus: AI automation', 'focus.intro': 'Proyek AI Operations Assistant-ku, bagian demi bagian: apa itu, cara menceritakannya, kode di baliknya, dan pertanyaan wawancara yang mungkin muncul.',
+  'focus.progress': '{done} dari {total} bagian bisa kujelaskan', 'focus.back': '← Fokus', 'focus.what': 'Apa ini', 'focus.code': 'Lihat di kode',
+  'focus.sim': 'Simulasi wawancara', 'focus.simStart': 'Mulai simulasi wawancara ({total} pertanyaan)', 'focus.simExit': 'Keluar',
+  'focus.simProgress': 'Pertanyaan {n} dari {total}', 'focus.simDraft': 'Jawab dengan suara atau tulis dulu (tidak disimpan)',
+  'focus.simOk': 'Saya bisa menjawab', 'focus.simWeak': 'Perlu latihan', 'focus.simScore': '{ok} dari {total} terjawab dengan baik',
+  'focus.simReview': 'Pelajari lagi jawaban ini', 'focus.simRetryWeak': 'Latih lagi yang ini', 'focus.simRestart': 'Ulangi seluruh simulasi',
   'pwa.update': 'Versi baru tersedia.', 'pwa.reload': 'Muat ulang', 'pwa.offline': 'Siap digunakan secara offline.',
 };
 

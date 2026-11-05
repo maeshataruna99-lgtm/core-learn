@@ -14,6 +14,7 @@ const links: { to: string; label: Key }[] = [
   { to: '/practice', label: 'nav.practice' },
   { to: '/wiki', label: 'nav.wiki' },
   { to: '/mycv', label: 'nav.mycv' },
+  { to: '/focus', label: 'nav.focus' },
   { to: '/progress', label: 'nav.progress' },
   { to: '/settings', label: 'nav.settings' },
 ];
@@ -37,7 +38,7 @@ watchEffect(() => {
         v-for="l in links"
         :key="l.to"
         :to="l.to"
-        class="flex min-w-0 flex-1 items-center justify-center rounded px-1 text-xs md:flex-none md:justify-start md:px-3 md:text-sm"
+        class="flex min-w-0 flex-1 items-center justify-center rounded px-0.5 text-[11px] md:flex-none md:justify-start md:px-3 md:text-sm"
         active-class="font-bold text-indigo-700 dark:text-indigo-300"
         exact-active-class="font-bold text-indigo-700 dark:text-indigo-300"
       >

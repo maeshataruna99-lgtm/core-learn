@@ -3,6 +3,8 @@ import { allCards } from '../src/content/index.ts';
 import { wikiEntries } from '../src/content/wiki/index.ts';
 import { emptyStore, migrate } from '../src/core/storage.ts';
 import { cvItems } from '../src/content/mycv/index.ts';
+import { focusTopics } from '../src/content/focus/index.ts';
+import { focusQuestions, validateFocus } from '../src/core/focus.ts';
 import { cvKey, validateCv } from '../src/core/mycv.ts';
 import { quizPool, searchWiki, validateWiki } from '../src/core/wiki.ts';
 import type { WikiEntry } from '../src/core/wiki.ts';
@@ -88,6 +90,20 @@ describe('store migration for the wiki', () => {
     const s = migrate({ version: 1, progress: {}, understood: { redis: '2026-01-01T00:00:00.000Z', bad: 5 } });
     expect(s?.understood).toEqual({ redis: '2026-01-01T00:00:00.000Z' });
     expect(migrate({ version: 1, progress: {}, understood: [1] })?.understood).toEqual({});
+  });
+});
+
+describe('focus data', () => {
+  it('ships valid topics with a simulation question for each', () => {
+    expect(validateFocus(focusTopics)).toEqual([]);
+    expect(focusQuestions(focusTopics).length).toBe(focusTopics.reduce((n, t) => n + t.questions.length, 0));
+  });
+  it('rejects bad topics', () => {
+    const base = focusTopics[0]!;
+    expect(validateFocus([base, base]).join()).toMatch(/duplicate id/);
+    expect(validateFocus([{ ...base, questions: [] }]).join()).toMatch(/at least one question/);
+    expect(validateFocus([{ ...base, what: { en: '', id: 'x' } }]).join()).toMatch(/what needs/);
+    expect(validateFocus([{ ...base, code: ['../secret'] }]).join()).toMatch(/bad code path/);
   });
 });
 
