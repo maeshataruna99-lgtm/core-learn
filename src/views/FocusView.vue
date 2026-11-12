@@ -127,7 +127,7 @@ function rate(ok: boolean) {
         </ol>
       </section>
 
-      <section aria-labelledby="f-code">
+      <section v-if="topic.code.length" aria-labelledby="f-code">
         <h2 id="f-code" class="font-semibold">{{ t('focus.code') }}</h2>
         <ul class="mt-1">
           <li v-for="p in topic.code" :key="p">
