@@ -1,10 +1,10 @@
-import { focusTopics } from '../src/content/focus/index.ts';
+import { focusProjects } from '../src/content/focus/index.ts';
 import { focusQuestions, validateFocus } from '../src/core/focus.ts';
 
-const errors = validateFocus(focusTopics);
+const errors = validateFocus(focusProjects);
 if (errors.length) {
   console.error(`Focus validation failed (${errors.length}):`);
   for (const e of errors) console.error(`  - ${e}`);
   process.exit(1);
 }
-console.log(`Focus OK: ${focusTopics.length} topics, ${focusQuestions(focusTopics).length} questions`);
+for (const p of focusProjects) console.log(`Focus OK: ${p.id}: ${p.topics.length} topics, ${focusQuestions(p.topics).length} questions`);

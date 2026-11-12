@@ -1,4 +1,5 @@
-import type { FocusTopic } from '../../core/focus.ts';
+import type { FocusProject, FocusTopic } from '../../core/focus.ts';
+import { splitBillTopics } from './splitbill.ts';
 
 // Study material for the core-ai-automation project. Numbers and claims follow the repo's README,
 // docs/EVALUATION.md and docs/PORTFOLIO_POSITIONING.md, including its "what not to claim" list.
@@ -193,5 +194,24 @@ export const focusTopics: FocusTopic[] = [
         a: { en: 'Answer truthfully with what you really did; do not use a prepared line that hides it. A strong shape: say which tools you used and for what, then show ownership. For example, explain a decision and its trade-off, walk through registry.py without notes, or say what you would change. If you cannot explain a part, study it before claiming it.',
           id: 'Jawab jujur sesuai yang benar-benar kamu lakukan; jangan memakai kalimat hafalan yang menutupinya. Bentuk yang kuat: sebut tool yang dipakai dan untuk apa, lalu tunjukkan kepemilikan. Misalnya, jelaskan satu keputusan beserta trade-off-nya, telusuri registry.py tanpa catatan, atau sebut apa yang akan kamu ubah. Kalau ada bagian yang belum bisa kamu jelaskan, pelajari dulu sebelum mengklaimnya.' } },
     ],
+  },
+];
+
+export const focusProjects: FocusProject[] = [
+  {
+    id: 'ai-ops',
+    title: { en: 'AI automation', id: 'AI automation' },
+    intro: { en: 'My AI Operations Assistant project, part by part: what it is, how to tell it, the code behind it and the interview questions it invites.',
+      id: 'Proyek AI Operations Assistant-ku, bagian demi bagian: apa itu, cara menceritakannya, kode di baliknya, dan pertanyaan wawancara yang mungkin muncul.' },
+    repo: 'https://github.com/maeshataruna99-lgtm/core-ai-automation',
+    topics: focusTopics,
+  },
+  {
+    id: 'split-bill',
+    title: { en: 'Allo Split Bill', id: 'Allo Split Bill' },
+    intro: { en: 'My Allo Bank backend take-home test (Java, Spring Boot, Vue), part by part: what each piece does, why it was chosen, the workflow it runs and the interview questions it invites.',
+      id: 'Take-home test backend Allo Bank-ku (Java, Spring Boot, Vue), bagian demi bagian: fungsi tiap bagian, kenapa dipilih, alur kerjanya, dan pertanyaan wawancara yang mungkin muncul.' },
+    repo: 'https://github.com/maeshataruna99-lgtm/allo-backend-test-mahesha',
+    topics: splitBillTopics,
   },
 ];

@@ -3,8 +3,8 @@ import { allCards } from '../src/content/index.ts';
 import { wikiEntries } from '../src/content/wiki/index.ts';
 import { emptyStore, migrate } from '../src/core/storage.ts';
 import { cvItems } from '../src/content/mycv/index.ts';
-import { focusTopics } from '../src/content/focus/index.ts';
-import { focusQuestions, validateFocus } from '../src/core/focus.ts';
+import { focusProjects, focusTopics } from '../src/content/focus/index.ts';
+import { focusCards, focusQuestions, validateFocus, validateTopics } from '../src/core/focus.ts';
 import { cvKey, validateCv } from '../src/core/mycv.ts';
 import { quizPool, searchWiki, validateWiki } from '../src/core/wiki.ts';
 import type { WikiEntry } from '../src/core/wiki.ts';
@@ -95,15 +95,28 @@ describe('store migration for the wiki', () => {
 
 describe('focus data', () => {
   it('ships valid topics with a simulation question for each', () => {
-    expect(validateFocus(focusTopics)).toEqual([]);
+    expect(validateFocus(focusProjects)).toEqual([]);
     expect(focusQuestions(focusTopics).length).toBe(focusTopics.reduce((n, t) => n + t.questions.length, 0));
+  });
+  it('builds one concept card per topic plus its questions', () => {
+    const topics = focusProjects[1]!.topics;
+    const cards = focusCards(topics);
+    expect(cards.length).toBe(topics.length + focusQuestions(topics).length);
+    expect(cards[0]).toMatchObject({ kind: 'concept', front: topics[0]!.title });
+    expect(cards[0]!.back.id).toContain(topics[0]!.why!.id);
+  });
+  it('rejects a topic id reused across projects', () => {
+    const [a, b] = focusProjects;
+    expect(validateFocus([a!, { ...b!, topics: [a!.topics[0]!] }]).join()).toMatch(/duplicate id/);
+    expect(validateFocus([a!, a!]).join()).toMatch(/duplicate project id/);
   });
   it('rejects bad topics', () => {
     const base = focusTopics[0]!;
-    expect(validateFocus([base, base]).join()).toMatch(/duplicate id/);
-    expect(validateFocus([{ ...base, questions: [] }]).join()).toMatch(/at least one question/);
-    expect(validateFocus([{ ...base, what: { en: '', id: 'x' } }]).join()).toMatch(/what needs/);
-    expect(validateFocus([{ ...base, code: ['../secret'] }]).join()).toMatch(/bad code path/);
+    expect(validateTopics([base, base]).join()).toMatch(/duplicate id/);
+    expect(validateTopics([{ ...base, questions: [] }]).join()).toMatch(/at least one question/);
+    expect(validateTopics([{ ...base, what: { en: '', id: 'x' } }]).join()).toMatch(/what needs/);
+    expect(validateTopics([{ ...base, code: ['../secret'] }]).join()).toMatch(/bad code path/);
+    expect(validateTopics([{ ...base, flow: [{ en: 'x', id: '' }] }]).join()).toMatch(/flow\[0\] needs/);
   });
 });
 
