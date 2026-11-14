@@ -1,4 +1,5 @@
 import type { FocusProject, FocusTopic } from '../../core/focus.ts';
+import { rocketTopics } from './rocket.ts';
 import { splitBillTopics } from './splitbill.ts';
 
 // Study material for the core-ai-automation project. Numbers and claims follow the repo's README,
@@ -213,5 +214,13 @@ export const focusProjects: FocusProject[] = [
       id: 'Take-home test backend Allo Bank-ku (Java, Spring Boot, Vue), bagian demi bagian: fungsi tiap bagian, kenapa dipilih, alur kerjanya, dan pertanyaan wawancara yang mungkin muncul.' },
     repo: 'https://github.com/maeshataruna99-lgtm/allo-backend-test-mahesha',
     topics: splitBillTopics,
+  },
+  {
+    id: 'rocket',
+    title: { en: 'Allo Rocket (FE)', id: 'Allo Rocket (FE)' },
+    intro: { en: 'My Allo Bank frontend take-home test (Vue 3, TypeScript, Vuetify, Pinia), part by part: what each piece does, why it was chosen, the workflow it runs and the interview questions it invites.',
+      id: 'Take-home test frontend Allo Bank-ku (Vue 3, TypeScript, Vuetify, Pinia), bagian demi bagian: fungsi tiap bagian, kenapa dipilih, alur kerjanya, dan pertanyaan wawancara yang mungkin muncul.' },
+    repo: 'https://github.com/maeshataruna99-lgtm/allo-frontend-test-mahesha',
+    topics: rocketTopics,
   },
 ];
