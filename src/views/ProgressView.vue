@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import AppIcon from '../components/AppIcon.vue';
 import { useStore } from '../composables/useStore.ts';
+import { boxDistribution, trackSummaries } from '../core/curriculum.ts';
 import { exportStore, parseImport } from '../core/exportImport.ts';
-import { mastery } from '../core/leitner.ts';
-import { TRACKS } from '../core/types.ts';
 import type { Store } from '../core/types.ts';
 import { useT } from '../i18n/index.ts';
 
@@ -12,13 +12,16 @@ const { cards, store, replace, reset } = useStore();
 const message = ref('');
 const pending = ref<{ store: Store; cardCount: number } | null>(null);
 
-const perTrack = computed(() =>
-  TRACKS.map((tr) => {
-    const inTrack = cards.filter((c) => c.track === tr);
-    const m = inTrack.length ? inTrack.reduce((s, c) => s + mastery(store.progress[c.id]), 0) / inTrack.length : 0;
-    return { track: tr, total: inTrack.length, percent: Math.round(m * 100) };
-  }).filter((r) => r.total > 0),
-);
+const summaries = computed(() => trackSummaries(cards, store.progress, new Date().toISOString()));
+const boxes = computed(() => boxDistribution(cards, store.progress));
+const totalSeen = computed(() => cards.filter((c) => Boolean(store.progress[c.id])).length);
+const overallPct = computed(() => {
+  if (!summaries.value.length) return 0;
+  const sum = summaries.value.reduce((acc, s) => acc + s.masteryPct * s.total, 0);
+  const total = summaries.value.reduce((acc, s) => acc + s.total, 0);
+  return total ? Math.round(sum / total) : 0;
+});
+
 const weak = computed(() =>
   cards
     .filter((c) => (store.progress[c.id]?.wrong ?? 0) > 0)
@@ -57,39 +60,141 @@ function doReset() {
 </script>
 
 <template>
-  <div class="space-y-6">
-    <h1 class="text-2xl font-bold">{{ t('progress.title') }}</h1>
-    <section>
-      <h2 class="mb-2 font-semibold">{{ t('progress.mastery') }}</h2>
-      <ul class="space-y-2">
-        <li v-for="r in perTrack" :key="r.track">
-          <div class="flex justify-between text-sm">
-            <span>{{ r.track }}</span><span>{{ r.percent }}%</span>
+  <div class="mx-auto max-w-4xl space-y-6">
+    <header class="flex flex-wrap items-end justify-between gap-4">
+      <h1 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-50">{{ t('progress.title') }}</h1>
+      <span class="rounded-full bg-indigo-50 px-3.5 py-1 font-mono text-xs font-semibold text-indigo-800 dark:bg-indigo-950/70 dark:text-indigo-200">
+        {{ t('progress.cardsCount', { done: totalSeen, total: cards.length }) }}
+      </span>
+    </header>
+
+    <!-- Overall Mastery & Leitner Box Distribution -->
+    <div class="grid gap-4 sm:grid-cols-2">
+      <section class="flex items-center gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="relative flex h-24 w-24 shrink-0 items-center justify-center">
+          <svg viewBox="0 0 100 100" class="h-24 w-24 -rotate-90" aria-hidden="true">
+            <circle cx="50" cy="50" r="42" stroke-width="8" fill="none" class="stroke-slate-200 dark:stroke-slate-800" />
+            <circle
+              cx="50"
+              cy="50"
+              r="42"
+              stroke-width="8"
+              fill="none"
+              stroke-linecap="round"
+              class="stroke-indigo-600 transition-all duration-500 dark:stroke-indigo-400"
+              :stroke-dasharray="263.9"
+              :stroke-dashoffset="263.9 * (1 - overallPct / 100)"
+            />
+          </svg>
+          <span class="absolute font-mono text-xl font-bold text-slate-900 dark:text-slate-50">{{ overallPct }}%</span>
+        </div>
+        <div class="space-y-1">
+          <h2 class="font-bold text-slate-900 dark:text-slate-50">{{ t('progress.overall') }}</h2>
+          <p class="text-sm text-slate-600 dark:text-slate-300">{{ t('progress.cardsCount', { done: totalSeen, total: cards.length }) }}</p>
+        </div>
+      </section>
+
+      <section class="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+        <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ t('progress.boxDist') }}</h2>
+        <div class="grid grid-cols-6 gap-2 text-center">
+          <div v-for="b in boxes" :key="b.key" class="flex flex-col items-center gap-1.5">
+            <div class="flex h-16 w-full items-end overflow-hidden rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
+              <div
+                class="w-full rounded-sm transition-all duration-300"
+                :class="b.key === 'unseen' ? 'bg-slate-400 dark:bg-slate-600' : b.key >= 4 ? 'bg-emerald-600 dark:bg-emerald-400' : 'bg-indigo-600 dark:bg-indigo-400'"
+                :style="{ height: `${cards.length ? Math.max(8, Math.round((b.count / cards.length) * 100)) : 8}%` }"
+              />
+            </div>
+            <span class="font-mono text-xs font-bold text-slate-900 dark:text-slate-100">{{ b.count }}</span>
+            <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+              {{ b.key === 'unseen' ? t('progress.unseenLabel') : t('progress.boxShort', { n: b.key }) }}
+            </span>
           </div>
-          <div class="h-2 rounded bg-slate-200 dark:bg-slate-700" role="progressbar" :aria-valuenow="r.percent" aria-valuemin="0" aria-valuemax="100" :aria-label="r.track">
-            <div class="h-2 rounded bg-indigo-700" :style="{ width: r.percent + '%' }" />
-          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Per-Track Mastery -->
+    <section class="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ t('progress.mastery') }}</h2>
+      <ul class="space-y-3">
+        <li v-for="r in summaries" :key="r.track">
+          <RouterLink
+            :to="{ path: '/learn', query: { track: r.track } }"
+            class="group block rounded-xl p-2 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50"
+          >
+            <div class="flex items-center justify-between text-sm">
+              <span class="font-semibold text-slate-900 group-hover:text-indigo-700 dark:text-slate-100 dark:group-hover:text-indigo-300">
+                {{ t(`track.${r.track}`) }}
+              </span>
+              <span class="font-mono text-xs font-semibold text-slate-600 dark:text-slate-300">
+                {{ r.seen }}/{{ r.total }} · {{ r.masteryPct }}%
+              </span>
+            </div>
+            <div
+              class="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
+              role="progressbar"
+              :aria-valuenow="r.masteryPct"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              :aria-label="r.track"
+            >
+              <div class="h-full rounded-full bg-indigo-600 transition-all duration-300 dark:bg-indigo-400" :style="{ width: `${r.masteryPct}%` }" />
+            </div>
+          </RouterLink>
         </li>
       </ul>
     </section>
-    <section>
-      <h2 class="mb-2 font-semibold">{{ t('progress.weak') }}</h2>
-      <p v-if="!weak.length" class="text-sm">{{ t('progress.none') }}</p>
-      <ul v-else class="list-disc pl-5 text-sm">
-        <li v-for="c in weak" :key="c.id">{{ c.id }} {{ t('progress.wrong', { n: store.progress[c.id]!.wrong }) }}</li>
+
+    <!-- Weak Cards -->
+    <section class="space-y-3 rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ t('progress.weak') }}</h2>
+      <p v-if="!weak.length" class="text-sm text-slate-600 dark:text-slate-300">{{ t('progress.none') }}</p>
+      <ul v-else class="grid gap-2 sm:grid-cols-2">
+        <li
+          v-for="c in weak"
+          :key="c.id"
+          class="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm dark:border-slate-800 dark:bg-slate-950/50"
+        >
+          <span class="truncate font-mono text-xs font-medium text-slate-800 dark:text-slate-200">{{ c.id }}</span>
+          <span class="shrink-0 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-800 dark:bg-rose-950/70 dark:text-rose-200">
+            {{ t('progress.wrong', { n: store.progress[c.id]!.wrong }) }}
+          </span>
+        </li>
       </ul>
     </section>
-    <section class="space-y-2">
-      <h2 class="font-semibold">{{ t('progress.backup') }}</h2>
-      <button class="rounded border px-4" @click="doExport">{{ t('progress.export') }}</button>
-      <label class="block">{{ t('progress.import') }} <input type="file" accept="application/json" class="block" @change="onFile"></label>
-      <div v-if="pending" class="rounded border p-3" role="alert">
-        {{ t('progress.confirm', { n: pending.cardCount }) }}
-        <button class="ml-2 rounded bg-indigo-700 px-3 text-white" @click="confirmImport">{{ t('progress.replace') }}</button>
-        <button class="ml-2 rounded border px-3" @click="pending = null">{{ t('progress.cancel') }}</button>
+
+    <!-- Backup & Reset -->
+    <section class="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ t('progress.backup') }}</h2>
+      <div class="flex flex-wrap items-center gap-3">
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          @click="doExport"
+        >
+          {{ t('progress.export') }}
+        </button>
+        <label class="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+          <span>{{ t('progress.import') }}</span>
+          <input type="file" accept="application/json" class="sr-only" @change="onFile" />
+        </label>
+        <button
+          type="button"
+          class="ml-auto inline-flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 px-4 font-semibold text-rose-800 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-200"
+          @click="doReset"
+        >
+          <AppIcon name="rotate-ccw" :size="15" />
+          <span>{{ t('progress.reset') }}</span>
+        </button>
       </div>
-      <p v-if="message" role="status">{{ message }}</p>
-      <button class="rounded border border-rose-700 px-4 text-rose-800 dark:text-rose-300" @click="doReset">{{ t('progress.reset') }}</button>
+
+      <div v-if="pending" class="flex flex-wrap items-center gap-3 rounded-xl border border-indigo-200 bg-indigo-50 p-3.5 text-sm dark:border-indigo-800 dark:bg-indigo-950/50" role="alert">
+        <span class="flex-1">{{ t('progress.confirm', { n: pending.cardCount }) }}</span>
+        <button type="button" class="rounded-lg bg-indigo-700 px-3.5 font-semibold text-white" @click="confirmImport">{{ t('progress.replace') }}</button>
+        <button type="button" class="rounded-lg border border-slate-300 px-3.5 dark:border-slate-700" @click="pending = null">{{ t('progress.cancel') }}</button>
+      </div>
+      <p v-if="message" class="text-sm font-medium text-emerald-700 dark:text-emerald-300" role="status">{{ message }}</p>
     </section>
   </div>
 </template>
