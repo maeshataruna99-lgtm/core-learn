@@ -1,4 +1,5 @@
 import type { FocusProject, FocusTopic } from '../../core/focus.ts';
+import { docExtractTopics } from './docextract.ts';
 import { rocketTopics } from './rocket.ts';
 import { splitBillTopics } from './splitbill.ts';
 
@@ -222,5 +223,13 @@ export const focusProjects: FocusProject[] = [
       id: 'Take-home test frontend Allo Bank-ku (Vue 3, TypeScript, Vuetify, Pinia), bagian demi bagian: fungsi tiap bagian, kenapa dipilih, alur kerjanya, dan pertanyaan wawancara yang mungkin muncul.' },
     repo: 'https://github.com/maeshataruna99-lgtm/allo-frontend-test-mahesha',
     topics: rocketTopics,
+  },
+  {
+    id: 'doc-extract',
+    title: { en: 'Doc Extraction', id: 'Doc Extraction' },
+    intro: { en: 'My Configurable Document Extraction project (Node 22, TypeScript, Fastify, React 19), part by part: why each choice was made, the pipeline flow, the code behind it and the interview questions it invites.',
+      id: 'Proyek Configurable Document Extraction-ku (Node 22, TypeScript, Fastify, React 19), bagian demi bagian: alasan tiap keputusan, alur pipeline-nya, kode di baliknya, dan pertanyaan wawancara yang mungkin muncul.' },
+    repo: 'https://github.com/maeshataruna99-lgtm/configurable-document-extraction',
+    topics: docExtractTopics,
   },
 ];
