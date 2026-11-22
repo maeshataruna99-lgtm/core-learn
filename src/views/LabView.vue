@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router';
 import AppIcon from '../components/AppIcon.vue';
 import CodeBlock from '../components/CodeBlock.vue';
 import FormattedText from '../components/FormattedText.vue';
+import LabPresentation from '../components/LabPresentation.vue';
 import { useStore } from '../composables/useStore.ts';
 import { labProjects } from '../content/lab/index.ts';
 import { cropStyle, isInside, labKey, type LabBox, type LabSpot } from '../core/lab.ts';
@@ -14,6 +15,11 @@ const route = useRoute();
 const router = useRouter();
 const { store, toggleUnderstood } = useStore();
 const lang = computed(() => store.settings.language);
+
+const presenting = computed(() => route.query.mode === 'present');
+function startPresentation() {
+  void router.replace({ query: { project: project.value.id, mode: 'present' } });
+}
 
 const project = computed(() => labProjects.find((p) => p.id === route.query.project) ?? labProjects[0]!);
 const partById = computed(() => new Map(project.value.parts.map((p) => [p.id, p])));
@@ -133,7 +139,7 @@ function nextFind() {
 }
 
 function onKey(e: KeyboardEvent) {
-  if (findQueue.value || (e.target as HTMLElement).closest('input, textarea, select')) return;
+  if (presenting.value || findQueue.value || (e.target as HTMLElement).closest('input, textarea, select')) return;
   if (e.key === 'ArrowRight') step(1);
   else if (e.key === 'ArrowLeft') step(-1);
   else if (e.key === 'Escape') selected.value = null;
@@ -159,12 +165,20 @@ const activeBox = computed(() => {
         </span>
         <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-50">{{ project.title[lang] }}</h1>
       </div>
-      <p class="max-w-3xl text-slate-600 dark:text-slate-300">{{ project.intro[lang] }}</p>
-      <div class="flex flex-wrap items-center gap-3">
+      <p v-if="!presenting" class="max-w-3xl text-slate-600 dark:text-slate-300">{{ project.intro[lang] }}</p>
+      <div v-if="!presenting" class="flex flex-wrap items-center gap-3">
         <div class="h-2.5 min-w-40 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800" role="progressbar" :aria-valuenow="foundTotal" aria-valuemin="0" :aria-valuemax="project.parts.length" :aria-label="t('lab.progress', { done: foundTotal, total: project.parts.length })">
           <div class="h-full rounded-full bg-gradient-to-r from-indigo-600 to-fuchsia-500 transition-all duration-500" :style="{ width: `${(foundTotal / project.parts.length) * 100}%` }" />
         </div>
         <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ t('lab.progress', { done: foundTotal, total: project.parts.length }) }}</span>
+        <button
+          v-if="!presenting"
+          type="button"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-indigo-600 to-fuchsia-600 px-4 text-sm font-semibold text-white shadow hover:from-indigo-700 hover:to-fuchsia-700"
+          @click="startPresentation"
+        >
+          <AppIcon name="play" :size="15" /><span>{{ t('present.start') }}</span>
+        </button>
         <a :href="project.repo" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-sm text-indigo-700 underline dark:text-indigo-300">
           <AppIcon name="external-link" :size="13" /><span>GitHub</span>
         </a>
@@ -174,6 +188,9 @@ const activeBox = computed(() => {
       </div>
     </header>
 
+    <LabPresentation v-if="presenting" />
+
+    <template v-else>
     <!-- projects -->
     <nav v-if="labProjects.length > 1" :aria-label="t('lab.projects')" class="flex flex-wrap gap-2">
       <button
@@ -425,5 +442,6 @@ const activeBox = computed(() => {
         </div>
       </aside>
     </div>
+    </template>
   </div>
 </template>

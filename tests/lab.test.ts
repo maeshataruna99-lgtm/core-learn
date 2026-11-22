@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { labProjects } from '../src/content/lab/index.ts';
-import { cropStyle, isInside, validateLab } from '../src/core/lab.ts';
+import { labTours } from '../src/content/lab/tours.ts';
+import { cameraFor, cropStyle, isInside, validateLab, validateTours } from '../src/core/lab.ts';
 
 describe('lab data', () => {
   it('ships valid projects where every spot has a captured box', () => {
@@ -30,6 +31,44 @@ describe('lab quiz', () => {
     const q = first!.quiz![0]!;
     const broken = { ...p, screens: [{ ...first!, quiz: [{ ...q, answer: q.options.length }] }, ...rest] };
     expect(validateLab([broken]).join()).toMatch(/answer out of range/);
+  });
+});
+
+describe('lab tours', () => {
+  it('ships a user and a developer tour whose steps point at captured boxes', () => {
+    expect(validateTours(labTours, labProjects)).toEqual([]);
+    expect(new Set(labTours.map((x) => x.audience))).toEqual(new Set(['user', 'dev']));
+  });
+
+  it('rejects steps on unknown screens or boxes', () => {
+    const t = labTours[0]!;
+    const bad = { ...t, steps: [{ ...t.steps[1]!, box: 'nope' }, { ...t.steps[1]!, screen: 'nope' }] };
+    const errors = validateTours([bad], labProjects).join('\n');
+    expect(errors).toMatch(/box "nope" missing/);
+    expect(errors).toMatch(/unknown screen "nope"/);
+  });
+});
+
+describe('lab camera', () => {
+  const cap = { width: 1000, height: 2000 };
+  it('zooms onto a small box and centres it, never past the image edges', () => {
+    const c = cameraFor({ x: 45, y: 45, w: 10, h: 2 }, cap, 800, 500, true);
+    expect(c.s).toBeGreaterThan(1);
+    expect(c.s).toBeLessThanOrEqual(2.4);
+    // Box centre lands in the middle of the frame.
+    expect(800 * 0.5 * c.s + c.tx).toBeCloseTo(400);
+    expect(c.tx).toBeLessThanOrEqual(0);
+    expect(c.tx).toBeGreaterThanOrEqual(800 - 800 * c.s);
+  });
+
+  it('keeps scale 1 without zoom or without a box', () => {
+    expect(cameraFor({ x: 0, y: 90, w: 10, h: 5 }, cap, 800, 500, false).s).toBe(1);
+    expect(cameraFor(null, cap, 800, 500, true)).toEqual({ s: 1, tx: 0, ty: 0 });
+  });
+
+  it('clamps a box at the bottom so the image still fills the frame', () => {
+    const c = cameraFor({ x: 0, y: 95, w: 100, h: 5 }, cap, 800, 500, false);
+    expect(c.ty).toBe(500 - 1600);
   });
 });
 

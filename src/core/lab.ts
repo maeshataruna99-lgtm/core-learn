@@ -166,3 +166,85 @@ export function validateLab(projects: LabProject[]): string[] {
   }
   return errors;
 }
+
+/** One step of a guided presentation: which screenshot, which box to highlight, and what the presenter says. */
+export interface LabTourStep {
+  project: string;
+  screen: string;
+  /** Box to highlight; omit for an overview step that shows the whole screen. */
+  box?: string;
+  /** Part with the full explanation, opened by "Show details". */
+  part?: string;
+  title: Bi;
+  say: Bi;
+  /** Zoom the camera onto the box (default true when a box is set). */
+  zoom?: boolean;
+}
+
+export interface LabTour {
+  id: string;
+  audience: 'user' | 'dev';
+  title: Bi;
+  /** What the viewer can do once the tour ends. */
+  goal: Bi;
+  steps: LabTourStep[];
+}
+
+export const tourKey = (tourId: string) => `lab:tour:${tourId}`;
+
+/**
+ * Camera transform that brings box `b` into a frame of `frameW`x`frameH` px showing an image of `cap` proportions
+ * rendered at the frame width. Returns scale and translate in px, clamped so the image always covers the frame.
+ */
+export function cameraFor(
+  b: LabBox | null,
+  cap: { width: number; height: number },
+  frameW: number,
+  frameH: number,
+  zoom: boolean,
+  maxScale = 2.4,
+  /** Pixels at the bottom of the frame kept free (for a dialog); the box is fitted and centred above them. */
+  reserve = 0,
+) {
+  const imgH = (frameW * cap.height) / cap.width;
+  if (!b) return { s: 1, tx: 0, ty: imgH > frameH ? 0 : (frameH - imgH) / 2 };
+  const room = Math.max(frameH * 0.3, frameH - reserve);
+  const bx = (b.x / 100) * frameW, by = (b.y / 100) * imgH, bw = (b.w / 100) * frameW, bh = (b.h / 100) * imgH;
+  // Zoom out below 1 only when the box would not fit the free room at all.
+  const fitAll = Math.min(1, (0.92 * room) / bh, (0.96 * frameW) / bw);
+  const want = zoom ? Math.min((0.7 * frameW) / bw, (0.6 * room) / bh) : 1;
+  const s = Math.min(maxScale, Math.max(fitAll, want));
+  const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+  const tx = s < 1 ? (frameW - frameW * s) / 2 : clamp(frameW / 2 - (bx + bw / 2) * s, frameW - frameW * s, 0);
+  // With a reserve, the image may rise above the reserved strip instead of always covering the frame.
+  const floor = (reserve ? room : frameH) - imgH * s;
+  const ty = imgH * s <= room ? (room - imgH * s) / 2 : clamp(room / 2 - (by + bh / 2) * s, floor, 0);
+  return { s, tx, ty };
+}
+
+export function validateTours(tours: LabTour[], projects: LabProject[]): string[] {
+  const errors: string[] = [];
+  const bi = (id: string, label: string, v: Bi | undefined) => {
+    if (!v?.en?.trim() || !v?.id?.trim()) errors.push(`${id}: ${label} needs non-empty en and id text`);
+  };
+  const seen = new Set<string>();
+  for (const tour of tours) {
+    if (seen.has(tour.id)) errors.push(`${tour.id}: duplicate tour id`);
+    seen.add(tour.id);
+    bi(tour.id, 'title', tour.title);
+    bi(tour.id, 'goal', tour.goal);
+    if (tour.steps.length < 2) errors.push(`${tour.id}: needs at least two steps`);
+    tour.steps.forEach((st, i) => {
+      const id = `${tour.id}/steps[${i}]`;
+      bi(id, 'title', st.title);
+      bi(id, 'say', st.say);
+      const p = projects.find((x) => x.id === st.project);
+      if (!p) return errors.push(`${id}: unknown project "${st.project}"`);
+      const cap = p.captures[st.screen];
+      if (!cap || !p.screens.some((s) => s.id === st.screen)) return errors.push(`${id}: unknown screen "${st.screen}"`);
+      if (st.box && !cap.boxes[st.box]) errors.push(`${id}: box "${st.box}" missing from capture`);
+      if (st.part && !p.parts.some((x) => x.id === st.part)) errors.push(`${id}: unknown part "${st.part}"`);
+    });
+  }
+  return errors;
+}
