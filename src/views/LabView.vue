@@ -60,7 +60,35 @@ function goProject(id: string) {
 watch([screenIndex, project], () => {
   selected.value = null;
   findQueue.value = null;
+  quizAt.value = null;
 });
+
+// Screen quiz: multiple-choice questions about what the screen shows. A perfect score is remembered.
+const quizAt = ref<number | null>(null);
+const picked = ref<number | null>(null);
+const quizScore = ref(0);
+const quizItem = computed(() => (quizAt.value === null ? null : screen.value.quiz?.[quizAt.value] ?? null));
+const quizKey = (screenId: string) => labKey(project.value.id, `quiz:${screenId}`);
+const quizPassed = (screenId: string) => Boolean(store.understood[quizKey(screenId)]);
+
+function startQuiz() {
+  findQueue.value = null;
+  selected.value = null;
+  quizAt.value = 0;
+  picked.value = null;
+  quizScore.value = 0;
+}
+function pick(i: number) {
+  if (picked.value !== null || !quizItem.value) return;
+  picked.value = i;
+  if (i === quizItem.value.answer) quizScore.value++;
+}
+function nextQuiz() {
+  picked.value = null;
+  quizAt.value = (quizAt.value ?? 0) + 1;
+  const total = screen.value.quiz?.length ?? 0;
+  if (quizAt.value >= total && quizScore.value === total && !quizPassed(screen.value.id)) toggleUnderstood(quizKey(screen.value.id));
+}
 
 // Spots sharing one box get their markers side by side instead of stacked.
 const dupIndex = (i: number) => screen.value.spots.slice(0, i).filter((s) => s.box === screen.value.spots[i]!.box).length;
@@ -76,6 +104,7 @@ const findSpot = computed(() => (findQueue.value ? screen.value.spots[findQueue.
 const findPart = computed(() => (findSpot.value ? partById.value.get(findSpot.value.part)! : null));
 
 function startFind() {
+  quizAt.value = null;
   const order = screen.value.spots.map((_, i) => i);
   for (let i = order.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -177,6 +206,7 @@ const activeBox = computed(() => {
         <span class="rounded-full px-1.5 text-xs" :class="screenFound(i) === s.spots.length ? 'bg-emerald-500 text-white' : i === screenIndex ? 'bg-white/20' : 'bg-slate-100 dark:bg-slate-800'">
           {{ screenFound(i) === s.spots.length ? '★' : `${screenFound(i)}/${s.spots.length}` }}
         </span>
+        <span v-if="s.quiz?.length" class="text-xs" :title="t('lab.quizBadge')" :aria-label="t('lab.quizBadge')">{{ quizPassed(s.id) ? '🏆' : '?' }}</span>
       </button>
     </nav>
 
@@ -194,6 +224,62 @@ const activeBox = computed(() => {
             <AppIcon name="target" :size="15" /><span>{{ t('lab.findStart') }}</span>
           </button>
           <button v-else type="button" class="rounded-xl border border-slate-400 px-3 text-sm" @click="findQueue = null">{{ t('lab.findExit') }}</button>
+          <button
+            v-if="screen.quiz?.length && quizAt === null"
+            type="button"
+            class="inline-flex items-center gap-1.5 rounded-xl bg-amber-500 px-3 text-sm font-semibold text-slate-950 hover:bg-amber-400"
+            @click="startQuiz"
+          >
+            <AppIcon name="lightbulb" :size="15" /><span>{{ t('lab.quizStart', { n: screen.quiz.length }) }}</span>
+          </button>
+          <button v-else-if="quizAt !== null" type="button" class="rounded-xl border border-slate-400 px-3 text-sm" @click="quizAt = null">{{ t('lab.quizExit') }}</button>
+        </div>
+
+        <!-- screen quiz -->
+        <div v-if="quizAt !== null && screen.quiz" class="space-y-3 rounded-xl border-2 border-amber-400 bg-amber-50 p-4 dark:border-amber-600 dark:bg-amber-950/40" aria-live="polite">
+          <template v-if="quizItem">
+            <p class="text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+              {{ t('lab.quizProgress', { n: quizAt + 1, total: screen.quiz.length, score: quizScore }) }}
+            </p>
+            <p class="font-semibold text-slate-900 dark:text-slate-100">{{ quizItem.q[lang] }}</p>
+            <div class="grid gap-2" role="group" :aria-label="quizItem.q[lang]">
+              <button
+                v-for="(o, i) in quizItem.options"
+                :key="i"
+                type="button"
+                class="flex items-start gap-2 rounded-xl border-2 px-3 py-2 text-left text-sm transition-colors"
+                :class="
+                  picked === null
+                    ? 'border-slate-300 bg-white hover:border-amber-500 dark:border-slate-700 dark:bg-slate-900'
+                    : i === quizItem.answer
+                      ? 'border-emerald-600 bg-emerald-50 text-emerald-950 dark:bg-emerald-950/50 dark:text-emerald-100'
+                      : i === picked
+                        ? 'border-rose-600 bg-rose-50 text-rose-950 dark:bg-rose-950/50 dark:text-rose-100'
+                        : 'border-slate-200 bg-white opacity-60 dark:border-slate-800 dark:bg-slate-900'
+                "
+                :disabled="picked !== null"
+                :aria-pressed="picked === i"
+                @click="pick(i)"
+              >
+                <span class="font-mono font-bold">{{ 'ABCD'[i] }}</span>
+                <span>{{ o[lang] }}</span>
+              </button>
+            </div>
+            <div v-if="picked !== null" class="space-y-2">
+              <p class="font-semibold" :class="picked === quizItem.answer ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'">
+                {{ picked === quizItem.answer ? t('lab.findRight') : t('lab.quizWrong') }}
+              </p>
+              <p class="text-sm text-slate-800 dark:text-slate-200">{{ quizItem.explain[lang] }}</p>
+              <button type="button" class="rounded-xl bg-amber-500 px-4 text-sm font-semibold text-slate-950" @click="nextQuiz">{{ t('lab.findNext') }}</button>
+            </div>
+          </template>
+          <div v-else class="flex flex-wrap items-center gap-2">
+            <p class="flex-1 font-semibold">
+              {{ t('lab.findScore', { ok: quizScore, total: screen.quiz.length }) }}
+              <span v-if="quizScore === screen.quiz.length"> · {{ t('lab.quizPerfect') }}</span>
+            </p>
+            <button type="button" class="rounded-xl bg-amber-500 px-3 text-sm font-semibold text-slate-950" @click="startQuiz">{{ t('lab.findAgain') }}</button>
+          </div>
         </div>
 
         <!-- find-it prompt -->

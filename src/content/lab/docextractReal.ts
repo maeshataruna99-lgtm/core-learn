@@ -2,6 +2,7 @@ import type { LabPart, LabProject, LabScreen } from '../../core/lab.ts';
 import { cdeRealShots } from './cdeRealShots.generated.ts';
 import { docExtractParts } from './docextract.ts';
 import { PAPER, TAX } from './realExamples.ts';
+import { realQuiz } from './realQuiz.ts';
 
 // Real runs with PROVIDER=deepseek on two sample files. Screens are 1440x900 viewport captures of the production
 // build; JSON results were saved during the capture and the quoted values below come from them.
@@ -221,6 +222,8 @@ const screens: LabScreen[] = [
     spots: [{ part: 'typeFilter', box: 'typeFilter' }, { part: 'structList', box: 'firstCard' }],
   },
 ];
+
+for (const s of screens) s.quiz = realQuiz[s.id];
 
 export const docExtractRealLab: LabProject = {
   id: 'cde-real',

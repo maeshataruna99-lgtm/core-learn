@@ -54,12 +54,23 @@ export interface LabSpot {
   note?: Bi;
 }
 
+/** A multiple-choice question about what one screen shows. */
+export interface LabQuiz {
+  q: Bi;
+  options: Bi[];
+  /** Index of the correct option. */
+  answer: number;
+  /** Why the answer is right, shown after answering. */
+  explain: Bi;
+}
+
 export interface LabScreen {
   /** Also the capture name and the image file name. */
   id: string;
   title: Bi;
   intro: Bi;
   spots: LabSpot[];
+  quiz?: LabQuiz[];
 }
 
 export interface LabCapture {
@@ -142,6 +153,14 @@ export function validateLab(projects: LabProject[]): string[] {
         if (cap && !cap.boxes[spot.box]) errors.push(`${s.id}: box "${spot.box}" missing from capture`);
         if (spot.note) bi(`${s.id}/${spot.part}`, 'note', spot.note);
       }
+      s.quiz?.forEach((q, i) => {
+        const id = `${s.id}/quiz[${i}]`;
+        bi(id, 'q', q.q);
+        bi(id, 'explain', q.explain);
+        q.options.forEach((o, j) => bi(id, `options[${j}]`, o));
+        if (q.options.length < 2) errors.push(`${id}: needs at least two options`);
+        if (!Number.isInteger(q.answer) || q.answer < 0 || q.answer >= q.options.length) errors.push(`${id}: answer out of range`);
+      });
     }
     for (const id of parts) if (!used.has(id)) errors.push(`${p.id}/${id}: part is not placed on any screen`);
   }

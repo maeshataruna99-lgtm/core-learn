@@ -18,6 +18,21 @@ describe('lab data', () => {
   });
 });
 
+describe('lab quiz', () => {
+  it('gives every real-run screen a quiz', () => {
+    const real = labProjects.find((p) => p.id === 'cde-real')!;
+    for (const s of real.screens) expect(s.quiz?.length, s.id).toBeGreaterThanOrEqual(3);
+  });
+
+  it('rejects an answer index outside the options', () => {
+    const p = labProjects.find((x) => x.id === 'cde-real')!;
+    const [first, ...rest] = p.screens;
+    const q = first!.quiz![0]!;
+    const broken = { ...p, screens: [{ ...first!, quiz: [{ ...q, answer: q.options.length }] }, ...rest] };
+    expect(validateLab([broken]).join()).toMatch(/answer out of range/);
+  });
+});
+
 describe('lab geometry', () => {
   const box = { x: 10, y: 20, w: 30, h: 40 };
   it('hit-tests clicks against a box in percent', () => {
