@@ -36,6 +36,7 @@ function start(id: string) {
   setQuery({ tour: id });
 }
 function exit() {
+  void exitFullscreen();
   void router.replace({ query: { project: route.query.project as string | undefined } });
 }
 function go(delta: number) {
@@ -52,6 +53,7 @@ function go(delta: number) {
 }
 function openInLab() {
   if (!step.value) return;
+  void exitFullscreen();
   void router.replace({ query: { project: step.value.project, screen: step.value.screen } });
 }
 watch(at, () => {
@@ -63,14 +65,89 @@ watch(tour, () => {
   finished.value = false;
 });
 
+// Full screen: prefer native Fullscreen API, fall back to a viewport overlay when unavailable.
+type WebkitDocument = Document & {
+  webkitFullscreenElement?: Element | null;
+  webkitExitFullscreen?: () => Promise<void> | void;
+};
+type WebkitElement = HTMLElement & {
+  webkitRequestFullscreen?: () => Promise<void> | void;
+};
+
+const root = ref<HTMLElement | null>(null);
+const nativeFullscreen = ref(false);
+const fallbackFullscreen = ref(false);
+const isFullscreen = computed(() => nativeFullscreen.value || fallbackFullscreen.value);
+
+function syncFullscreen() {
+  if (typeof document === 'undefined') return;
+  const doc = document as WebkitDocument;
+  const fsEl = doc.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
+  nativeFullscreen.value = Boolean(root.value && fsEl === root.value);
+}
+
+async function enterFullscreen() {
+  const el = root.value as WebkitElement | null;
+  if (!el) return;
+  try {
+    if (el.requestFullscreen) {
+      await el.requestFullscreen();
+      syncFullscreen();
+      return;
+    }
+    if (el.webkitRequestFullscreen) {
+      await el.webkitRequestFullscreen();
+      syncFullscreen();
+      return;
+    }
+  } catch {
+    // Fall back to viewport overlay when native fullscreen is blocked or unsupported.
+  }
+  fallbackFullscreen.value = true;
+}
+
+async function exitFullscreen() {
+  fallbackFullscreen.value = false;
+  if (typeof document === 'undefined') return;
+  const doc = document as WebkitDocument;
+  try {
+    if (doc.fullscreenElement && doc.exitFullscreen) await doc.exitFullscreen();
+    else if (doc.webkitFullscreenElement && doc.webkitExitFullscreen) await doc.webkitExitFullscreen();
+  } catch {
+    // Ignore when already out of fullscreen.
+  }
+  syncFullscreen();
+}
+
+function toggleFullscreen() {
+  if (isFullscreen.value) void exitFullscreen();
+  else void enterFullscreen();
+}
+
+let prevBodyOverflow = '';
+watch(fallbackFullscreen, (on) => {
+  if (typeof document === 'undefined') return;
+  if (on) {
+    prevBodyOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = prevBodyOverflow;
+  }
+});
+
 // Camera: frame size drives where the spotlighted box ends up.
 const frame = ref<HTMLElement | null>(null);
 const frameW = ref(0);
+const frameMeasuredH = ref(0);
 const viewportH = ref(typeof window === 'undefined' ? 800 : window.innerHeight);
-const frameH = computed(() => Math.round(Math.max(300, Math.min(frameW.value * 0.6, viewportH.value * 0.68))));
+const normalFrameH = computed(() => Math.round(Math.max(300, Math.min(frameW.value * 0.6, viewportH.value * 0.68))));
 const reduced = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const imgH = computed(() => (capture.value ? (frameW.value * capture.value.height) / capture.value.width : 0));
 const wide = computed(() => frameW.value >= 720);
+const fillStage = computed(() => isFullscreen.value && wide.value);
+const frameH = computed(() =>
+  fillStage.value && frameMeasuredH.value > 0 ? Math.round(frameMeasuredH.value) : normalFrameH.value,
+);
 const DIALOG_W = 360;
 /** Height kept free under the box when the dialog cannot sit beside it. */
 const DIALOG_RESERVE = 310;
@@ -113,19 +190,38 @@ function onResize() {
   viewportH.value = window.innerHeight;
 }
 function onKey(e: KeyboardEvent) {
-  if (!tour.value || (e.target as HTMLElement).closest('input, textarea, select')) return;
+  if ((e.target as HTMLElement | null)?.closest('input, textarea, select')) return;
+  if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    e.preventDefault();
+    toggleFullscreen();
+    return;
+  }
+  if (e.key === 'Escape') {
+    if (isFullscreen.value) {
+      e.preventDefault();
+      void exitFullscreen();
+    } else if (tour.value) {
+      exit();
+    }
+    return;
+  }
+  if (!tour.value) return;
   if (e.key === 'ArrowRight') go(1);
   else if (e.key === 'ArrowLeft') go(-1);
-  else if (e.key === 'Escape') exit();
 }
 onMounted(() => {
   window.addEventListener('keydown', onKey);
   window.addEventListener('resize', onResize);
+  document.addEventListener('fullscreenchange', syncFullscreen);
+  document.addEventListener('webkitfullscreenchange', syncFullscreen);
 });
 watch(frame, (el) => {
   ro?.disconnect();
   if (!el) return;
-  ro = new ResizeObserver(([entry]) => (frameW.value = entry!.contentRect.width));
+  ro = new ResizeObserver(([entry]) => {
+    frameW.value = entry!.contentRect.width;
+    frameMeasuredH.value = entry!.contentRect.height;
+  });
   ro.observe(el);
 });
 
@@ -140,17 +236,42 @@ watch([autoplay, at, finished], () => {
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKey);
   window.removeEventListener('resize', onResize);
+  document.removeEventListener('fullscreenchange', syncFullscreen);
+  document.removeEventListener('webkitfullscreenchange', syncFullscreen);
+  if (fallbackFullscreen.value) document.body.style.overflow = prevBodyOverflow;
+  void exitFullscreen();
   ro?.disconnect();
   clearTimeout(timer);
 });
 </script>
 
 <template>
-  <div class="space-y-4">
+  <div
+    ref="root"
+    class="present-root"
+    :class="
+      isFullscreen
+        ? [
+            fallbackFullscreen ? 'fixed inset-0 z-50' : 'h-full w-full',
+            'flex flex-col bg-[var(--surface-canvas)] p-4 text-[var(--text-primary)]',
+            tour && fillStage && !finished ? 'overflow-hidden' : 'overflow-y-auto',
+          ]
+        : 'space-y-4'
+    "
+  >
     <!-- chooser -->
     <section v-if="!tour" class="space-y-4" aria-labelledby="present-title">
       <div class="flex flex-wrap items-center gap-2">
         <h2 id="present-title" class="flex-1 text-xl font-bold text-slate-900 dark:text-slate-50">{{ t('present.choose') }}</h2>
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 rounded-xl border px-3 text-sm"
+          :class="isFullscreen ? 'border-fuchsia-600 bg-fuchsia-50 text-fuchsia-800 dark:bg-fuchsia-950/50 dark:text-fuchsia-200' : 'border-slate-400'"
+          :aria-pressed="isFullscreen"
+          @click="toggleFullscreen"
+        >
+          <AppIcon :name="isFullscreen ? 'minimize' : 'maximize'" :size="14" /><span>{{ isFullscreen ? t('present.exitFullscreen') : t('present.fullscreen') }}</span>
+        </button>
         <button type="button" class="rounded-xl border border-slate-400 px-4 text-sm" @click="exit">{{ t('present.exit') }}</button>
       </div>
       <div class="grid gap-3 md:grid-cols-2">
@@ -175,7 +296,7 @@ onBeforeUnmount(() => {
     </section>
 
     <!-- presentation -->
-    <section v-else class="space-y-3" :aria-label="tour.title[lang]">
+    <section v-else :class="isFullscreen ? 'flex min-h-0 flex-1 flex-col gap-3' : 'space-y-3'" :aria-label="tour.title[lang]">
       <div class="flex flex-wrap items-center gap-2">
         <h2 class="min-w-0 flex-1 truncate text-lg font-bold text-slate-900 dark:text-slate-50">{{ tour.title[lang] }}</h2>
         <button
@@ -187,6 +308,15 @@ onBeforeUnmount(() => {
           @click="autoplay = !autoplay"
         >
           <AppIcon :name="autoplay ? 'clock' : 'play'" :size="14" /><span>{{ autoplay ? t('present.autoOn') : t('present.autoOff') }}</span>
+        </button>
+        <button
+          type="button"
+          class="inline-flex items-center gap-1.5 rounded-xl border px-3 text-sm"
+          :class="isFullscreen ? 'border-fuchsia-600 bg-fuchsia-50 text-fuchsia-800 dark:bg-fuchsia-950/50 dark:text-fuchsia-200' : 'border-slate-400'"
+          :aria-pressed="isFullscreen"
+          @click="toggleFullscreen"
+        >
+          <AppIcon :name="isFullscreen ? 'minimize' : 'maximize'" :size="14" /><span>{{ isFullscreen ? t('present.exitFullscreen') : t('present.fullscreen') }}</span>
         </button>
         <button type="button" class="rounded-xl border border-slate-400 px-3 text-sm" @click="setQuery({ tour: undefined })">{{ t('present.otherTour') }}</button>
         <button type="button" class="rounded-xl border border-slate-400 px-3 text-sm" @click="exit">{{ t('present.exit') }}</button>
@@ -206,7 +336,7 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- finish card -->
-      <div v-if="finished" class="space-y-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50 p-6 text-center dark:bg-emerald-950/40" role="status">
+      <div v-if="finished" class="space-y-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50 p-6 text-center dark:bg-emerald-950/40" :class="isFullscreen ? 'my-auto' : ''" role="status">
         <p class="text-4xl" aria-hidden="true">🎯</p>
         <h3 class="text-xl font-bold text-emerald-900 dark:text-emerald-100">{{ t('present.goalReached') }}</h3>
         <p class="mx-auto max-w-xl text-slate-800 dark:text-slate-200">{{ tour.goal[lang] }}</p>
@@ -219,7 +349,12 @@ onBeforeUnmount(() => {
 
       <!-- stage -->
       <template v-else-if="step && capture">
-        <div ref="frame" class="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-lg dark:border-slate-800" :style="{ height: `${frameH}px` }">
+        <div
+          ref="frame"
+          class="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-900 shadow-lg dark:border-slate-800"
+          :class="fillStage ? 'min-h-0 flex-1' : isFullscreen ? 'shrink-0' : ''"
+          :style="fillStage ? undefined : { height: `${normalFrameH}px` }"
+        >
           <Transition name="present-fade">
             <div
               :key="image"
@@ -300,6 +435,9 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
+.present-root:fullscreen::backdrop {
+  background: var(--surface-canvas);
+}
 .present-fade-enter-active,
 .present-fade-leave-active {
   transition: opacity 0.45s ease;

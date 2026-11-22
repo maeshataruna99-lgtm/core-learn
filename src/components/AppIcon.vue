@@ -31,7 +31,9 @@ export type IconName =
   | 'shuffle'
   | 'play'
   | 'copy'
-  | 'list';
+  | 'list'
+  | 'maximize'
+  | 'minimize';
 
 withDefaults(defineProps<{ name: IconName; size?: number }>(), { size: 18 });
 </script>
@@ -200,6 +202,18 @@ withDefaults(defineProps<{ name: IconName; size?: number }>(), { size: 18 });
       <line x1="3" x2="3.01" y1="6" y2="6" />
       <line x1="3" x2="3.01" y1="12" y2="12" />
       <line x1="3" x2="3.01" y1="18" y2="18" />
+    </template>
+    <template v-else-if="name === 'maximize'">
+      <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+      <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+      <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+      <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+    </template>
+    <template v-else-if="name === 'minimize'">
+      <path d="M8 3v3a2 2 0 0 1-2 2H3" />
+      <path d="M21 8h-3a2 2 0 0 1-2-2V3" />
+      <path d="M3 16h3a2 2 0 0 1 2 2v3" />
+      <path d="M16 21v-3a2 2 0 0 1 2-2h3" />
     </template>
   </svg>
 </template>
