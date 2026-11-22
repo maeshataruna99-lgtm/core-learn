@@ -34,6 +34,7 @@ const navGroups: { title: Key; items: NavLink[] }[] = [
     items: [
       { to: '/wiki', label: 'nav.wiki', icon: 'library' },
       { to: '/focus', label: 'nav.focus', icon: 'compass' },
+      { to: '/lab', label: 'nav.lab', icon: 'sparkles' },
       { to: '/mycv', label: 'nav.mycv', icon: 'file-text' },
     ],
   },
@@ -53,7 +54,7 @@ const mobilePrimary: NavLink[] = [
   { to: '/wiki', label: 'nav.wiki', icon: 'library' },
 ];
 
-const mobileSecondaryActive = computed(() => ['/focus', '/mycv', '/progress', '/settings'].includes(route.path));
+const mobileSecondaryActive = computed(() => ['/focus', '/lab', '/mycv', '/progress', '/settings'].includes(route.path));
 
 const themeIcon = computed<IconName>(() => {
   if (store.settings.theme === 'dark') return 'moon';

@@ -2,7 +2,7 @@ import { useStore } from '../composables/useStore.ts';
 
 // UI strings only. Card content and code stay in English.
 export const en = {
-  'nav.home': 'Home', 'nav.learn': 'Learn', 'nav.practice': 'Practice', 'nav.progress': 'Progress', 'nav.settings': 'Settings', 'nav.wiki': 'Wiki', 'nav.mycv': 'MyCV', 'nav.focus': 'Focus',
+  'nav.home': 'Home', 'nav.learn': 'Learn', 'nav.practice': 'Practice', 'nav.progress': 'Progress', 'nav.settings': 'Settings', 'nav.wiki': 'Wiki', 'nav.mycv': 'MyCV', 'nav.focus': 'Focus', 'nav.lab': 'Experimental Learn',
   'nav.group.study': 'Study', 'nav.group.reference': 'Interview & Reference', 'nav.group.system': 'System',
   'nav.more': 'More', 'nav.close': 'Close menu',
   'home.due': 'due today ({n} total)', 'home.streak': 'day streak', 'home.continue': 'Continue review',
@@ -96,6 +96,14 @@ export const en = {
   'mycv.terms': '{done}/{total} terms understood', 'mycv.questions': 'Likely interview questions',
   'mycv.show': 'Show a good answer', 'mycv.hide': 'Hide answer',
   'mycv.explain': 'I can explain this', 'mycv.explained': 'I can explain this',
+  'lab.badge': 'Experimental', 'lab.progress': '{done} of {total} parts discovered', 'lab.screens': 'Screens',
+  'lab.findStart': 'Play: Find it', 'lab.findExit': 'Stop game', 'lab.findProgress': 'Question {n} of {total} · score {score}',
+  'lab.findAsk': 'Click the part of the screen that does this:', 'lab.findRight': 'Correct!', 'lab.findWrong': 'Not quite. It is:',
+  'lab.findNext': 'Next', 'lab.findScore': '{ok} of {total} found', 'lab.findAgain': 'Play again',
+  'lab.hint': 'Tap a numbered spot to learn that part. Arrow keys move between spots; Esc closes.', 'lab.findHint': 'Click on the screenshot where you think the part is.',
+  'lab.prev': 'Previous part', 'lab.next': 'Next part', 'lab.crop': 'Zoomed view of {part}', 'lab.inThisState': 'On this screen:',
+  'lab.what': 'What it is for', 'lab.why': 'Why it was built this way', 'lab.component': 'Component', 'lab.files': 'Files involved ({n})',
+  'lab.deeper': 'Deeper theory in Focus', 'lab.pick': 'Pick a part to explore:',
   'focus.title': 'Focus: {project}', 'focus.projects': 'Projects', 'focus.why': 'Why this choice', 'focus.flow': 'Workflow',
   'focus.deck': 'Swipe cards', 'focus.deckProgress': 'Card {n} of {total}', 'focus.deckStart': 'Swipe cards ({total} cards)', 'focus.deckConcept': 'Concept', 'focus.deckQuestion': 'Interview question',
   'focus.deckBack': 'Answer', 'focus.deckExplain': 'Explain: {topic}', 'focus.deckFlip': 'Card, press to flip', 'focus.deckFlipShort': 'Flip',
@@ -111,7 +119,7 @@ export const en = {
 export type Key = keyof typeof en;
 
 export const id: Record<Key, string> = {
-  'nav.home': 'Beranda', 'nav.learn': 'Belajar', 'nav.practice': 'Latihan', 'nav.progress': 'Progres', 'nav.settings': 'Setelan', 'nav.wiki': 'Wiki', 'nav.mycv': 'MyCV', 'nav.focus': 'Fokus',
+  'nav.home': 'Beranda', 'nav.learn': 'Belajar', 'nav.practice': 'Latihan', 'nav.progress': 'Progres', 'nav.settings': 'Setelan', 'nav.wiki': 'Wiki', 'nav.mycv': 'MyCV', 'nav.focus': 'Fokus', 'nav.lab': 'Experimental Learn',
   'nav.group.study': 'Belajar', 'nav.group.reference': 'Wawancara & Referensi', 'nav.group.system': 'Sistem',
   'nav.more': 'Lainnya', 'nav.close': 'Tutup menu',
   'home.due': 'jatuh tempo hari ini (total {n})', 'home.streak': 'hari beruntun', 'home.continue': 'Lanjutkan ulasan',
@@ -205,6 +213,14 @@ export const id: Record<Key, string> = {
   'mycv.terms': '{done}/{total} istilah dipahami', 'mycv.questions': 'Pertanyaan wawancara yang mungkin muncul',
   'mycv.show': 'Lihat contoh jawaban bagus', 'mycv.hide': 'Sembunyikan jawaban',
   'mycv.explain': 'Saya bisa menjelaskan ini', 'mycv.explained': 'Saya bisa menjelaskan ini',
+  'lab.badge': 'Eksperimental', 'lab.progress': '{done} dari {total} bagian ditemukan', 'lab.screens': 'Layar',
+  'lab.findStart': 'Main: Temukan', 'lab.findExit': 'Berhenti main', 'lab.findProgress': 'Soal {n} dari {total} · skor {score}',
+  'lab.findAsk': 'Klik bagian layar yang melakukan ini:', 'lab.findRight': 'Benar!', 'lab.findWrong': 'Belum tepat. Jawabannya:',
+  'lab.findNext': 'Lanjut', 'lab.findScore': '{ok} dari {total} ditemukan', 'lab.findAgain': 'Main lagi',
+  'lab.hint': 'Ketuk titik bernomor untuk mempelajari bagian itu. Tombol panah berpindah antar titik; Esc menutup.', 'lab.findHint': 'Klik di screenshot pada tempat yang kamu kira bagian itu berada.',
+  'lab.prev': 'Bagian sebelumnya', 'lab.next': 'Bagian berikutnya', 'lab.crop': 'Tampilan zoom {part}', 'lab.inThisState': 'Di layar ini:',
+  'lab.what': 'Fungsinya', 'lab.why': 'Kenapa dibuat begini', 'lab.component': 'Komponen', 'lab.files': 'File yang terlibat ({n})',
+  'lab.deeper': 'Teori lebih dalam di Fokus', 'lab.pick': 'Pilih bagian untuk dijelajahi:',
   'focus.title': 'Fokus: {project}', 'focus.projects': 'Proyek', 'focus.why': 'Kenapa dipakai', 'focus.flow': 'Alur kerja',
   'focus.deck': 'Kartu swipe', 'focus.deckProgress': 'Kartu {n} dari {total}', 'focus.deckStart': 'Kartu swipe ({total} kartu)', 'focus.deckConcept': 'Konsep', 'focus.deckQuestion': 'Pertanyaan wawancara',
   'focus.deckBack': 'Jawaban', 'focus.deckExplain': 'Jelaskan: {topic}', 'focus.deckFlip': 'Kartu, tekan untuk membalik', 'focus.deckFlipShort': 'Balik',
