@@ -1,3 +1,4 @@
+import type { IconName } from '../components/AppIcon.vue';
 import type { Bi } from './wiki.ts';
 
 /** A box on a screenshot, in percent of the full page image. */
@@ -32,6 +33,18 @@ export interface LabPart {
   files: LabFile[];
   /** A Focus topic id with the deeper theory behind this part. */
   focus?: string;
+  /** What this part showed in real runs, one entry per sample file. Values are quoted from the run output. */
+  examples?: LabExample[];
+}
+
+/** A real value this part produced for one sample file. */
+export interface LabExample {
+  /** Sample file name, e.g. "images.jpg". */
+  file: string;
+  /** Quoted output, kept in its original language. */
+  value: string;
+  /** Optional explanation of what the value shows. */
+  note?: Bi;
 }
 
 /** A part placed on one screenshot. `box` names a box from the capture; `note` says what differs in this state. */
@@ -57,9 +70,14 @@ export interface LabCapture {
 
 export interface LabProject {
   id: string;
+  /** Short label for the project switcher. */
+  tab: Bi;
+  icon?: IconName;
   title: Bi;
   intro: Bi;
   repo: string;
+  /** Full outputs to open, e.g. the real `.extraction.md` files. */
+  outputs?: { file: string; href: string }[];
   /** Folder under /public holding `<screen id>.jpg`. */
   imageDir: string;
   captures: Record<string, LabCapture>;
@@ -106,6 +124,10 @@ export function validateLab(projects: LabProject[]): string[] {
       for (const f of part.files) {
         if (f.path.startsWith('/') || f.path.includes('..')) errors.push(`${part.id}: bad file path "${f.path}"`);
         bi(part.id, `file ${f.path} role`, f.role);
+      }
+      for (const ex of part.examples ?? []) {
+        if (!ex.file.trim() || !ex.value.trim()) errors.push(`${part.id}: example needs a file and a value`);
+        if (ex.note) bi(part.id, `example ${ex.file} note`, ex.note);
       }
     }
     const used = new Set<string>();

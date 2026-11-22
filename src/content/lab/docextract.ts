@@ -1,12 +1,13 @@
 import type { LabPart, LabProject, LabScreen } from '../../core/lab.ts';
 import { cdeShots } from './cdeShots.generated.ts';
+import { realExamples } from './realExamples.ts';
 
 // Screen-by-screen tour of the Configurable Document Extraction web UI. Screenshots were captured from the
 // production build with PROVIDER=fake, so results show the fake provider's single placeholder item.
 const W = 'apps/web/src';
 const A = 'apps/api/src';
 
-const parts: LabPart[] = [
+export const docExtractParts: LabPart[] = [
   {
     id: 'brand',
     title: { en: 'Brand header', id: 'Header brand' },
@@ -447,6 +448,9 @@ const parts: LabPart[] = [
   },
 ];
 
+// Every part that real runs exercised also shows what it produced for the two sample files.
+for (const p of docExtractParts) p.examples = realExamples[p.id];
+
 const screens: LabScreen[] = [
   {
     id: 'onboarding',
@@ -523,6 +527,8 @@ const screens: LabScreen[] = [
 
 export const docExtractLab: LabProject = {
   id: 'cde',
+  tab: { en: 'UI tour (fake provider)', id: 'Tur UI (provider fake)' },
+  icon: 'monitor',
   title: { en: 'Configurable Document Extraction', id: 'Configurable Document Extraction' },
   intro: {
     en: 'Explore the real web UI screen by screen. Tap a numbered spot to see what that part does, why it was built that way, which component renders it and the code behind it. Then play "Find it" to test yourself.',
@@ -531,6 +537,6 @@ export const docExtractLab: LabProject = {
   repo: 'https://github.com/maeshataruna99-lgtm/configurable-document-extraction',
   imageDir: '/lab/cde',
   captures: cdeShots,
-  parts,
+  parts: docExtractParts,
   screens,
 };

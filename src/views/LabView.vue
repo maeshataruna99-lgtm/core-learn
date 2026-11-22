@@ -15,31 +15,31 @@ const router = useRouter();
 const { store, toggleUnderstood } = useStore();
 const lang = computed(() => store.settings.language);
 
-const project = labProjects[0]!;
-const partById = new Map(project.parts.map((p) => [p.id, p]));
+const project = computed(() => labProjects.find((p) => p.id === route.query.project) ?? labProjects[0]!);
+const partById = computed(() => new Map(project.value.parts.map((p) => [p.id, p])));
 
 const screenIndex = computed(() => {
-  const i = project.screens.findIndex((s) => s.id === route.query.screen);
+  const i = project.value.screens.findIndex((s) => s.id === route.query.screen);
   return i < 0 ? 0 : i;
 });
-const screen = computed(() => project.screens[screenIndex.value]!);
-const capture = computed(() => project.captures[screen.value.id]!);
-const image = computed(() => `${project.imageDir}/${screen.value.id}.jpg`);
+const screen = computed(() => project.value.screens[screenIndex.value]!);
+const capture = computed(() => project.value.captures[screen.value.id]!);
+const image = computed(() => `${project.value.imageDir}/${screen.value.id}.jpg`);
 const boxOf = (spot: LabSpot) => capture.value.boxes[spot.box] as LabBox;
 
 // Discovery progress, stored with the other "understood" marks.
-const found = (partId: string) => Boolean(store.understood[labKey(project.id, partId)]);
+const found = (partId: string) => Boolean(store.understood[labKey(project.value.id, partId)]);
 const discover = (partId: string) => {
-  if (!found(partId)) toggleUnderstood(labKey(project.id, partId));
+  if (!found(partId)) toggleUnderstood(labKey(project.value.id, partId));
 };
-const foundTotal = computed(() => project.parts.filter((p) => found(p.id)).length);
-const screenFound = (i: number) => project.screens[i]!.spots.filter((s) => found(s.part)).length;
+const foundTotal = computed(() => project.value.parts.filter((p) => found(p.id)).length);
+const screenFound = (i: number) => project.value.screens[i]!.spots.filter((s) => found(s.part)).length;
 
 // Explore mode
 const selected = ref<number | null>(null);
 const hovered = ref<number | null>(null);
 const spot = computed(() => (selected.value === null ? null : screen.value.spots[selected.value] ?? null));
-const part = computed(() => (spot.value ? partById.get(spot.value.part) ?? null : null));
+const part = computed(() => (spot.value ? partById.value.get(spot.value.part) ?? null : null));
 const detailEl = ref<HTMLElement | null>(null);
 
 function select(i: number) {
@@ -52,13 +52,18 @@ function step(delta: number) {
   select(selected.value === null ? 0 : (selected.value + delta + n) % n);
 }
 function goScreen(i: number) {
-  void router.replace({ query: { ...route.query, screen: project.screens[i]!.id } });
+  void router.replace({ query: { ...route.query, screen: project.value.screens[i]!.id } });
 }
-watch(screenIndex, () => {
+function goProject(id: string) {
+  void router.replace({ query: { project: id } });
+}
+watch([screenIndex, project], () => {
   selected.value = null;
   findQueue.value = null;
 });
 
+// Spots sharing one box get their markers side by side instead of stacked.
+const dupIndex = (i: number) => screen.value.spots.slice(0, i).filter((s) => s.box === screen.value.spots[i]!.box).length;
 const markerStyle = (b: LabBox) => ({ left: `${Math.min(b.x, 97)}%`, top: `${Math.min(b.y, 98)}%` });
 const boxStyle = (b: LabBox) => ({ left: `${b.x}%`, top: `${b.y}%`, width: `${b.w}%`, height: `${b.h}%` });
 
@@ -68,7 +73,7 @@ const findAt = ref(0);
 const findScore = ref(0);
 const answer = ref<{ x: number; y: number; ok: boolean } | null>(null);
 const findSpot = computed(() => (findQueue.value ? screen.value.spots[findQueue.value[findAt.value]!] ?? null : null));
-const findPart = computed(() => (findSpot.value ? partById.get(findSpot.value.part)! : null));
+const findPart = computed(() => (findSpot.value ? partById.value.get(findSpot.value.part)! : null));
 
 function startFind() {
   const order = screen.value.spots.map((_, i) => i);
@@ -134,8 +139,27 @@ const activeBox = computed(() => {
         <a :href="project.repo" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-sm text-indigo-700 underline dark:text-indigo-300">
           <AppIcon name="external-link" :size="13" /><span>GitHub</span>
         </a>
+        <a v-for="o in project.outputs" :key="o.href" :href="o.href" target="_blank" rel="noopener" class="inline-flex items-center gap-1 text-sm text-emerald-700 underline dark:text-emerald-300">
+          <AppIcon name="file-text" :size="13" /><span>{{ o.file }}</span>
+        </a>
       </div>
     </header>
+
+    <!-- projects -->
+    <nav v-if="labProjects.length > 1" :aria-label="t('lab.projects')" class="flex flex-wrap gap-2">
+      <button
+        v-for="p in labProjects"
+        :key="p.id"
+        type="button"
+        class="inline-flex min-w-40 flex-1 items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-colors"
+        :class="p.id === project.id ? 'border-fuchsia-600 bg-fuchsia-600 text-white' : 'border-slate-300 bg-white text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'"
+        :aria-current="p.id === project.id ? 'page' : undefined"
+        @click="goProject(p.id)"
+      >
+        <AppIcon :name="p.icon ?? 'monitor'" :size="15" />
+        <span>{{ p.tab[lang] }}</span>
+      </button>
+    </nav>
 
     <!-- levels -->
     <nav :aria-label="t('lab.screens')" class="flex gap-2 overflow-x-auto pb-1">
@@ -225,7 +249,7 @@ const activeBox = computed(() => {
                 :class="[
                   selected === i ? 'scale-125 bg-fuchsia-600 text-white' : found(s.part) ? 'bg-emerald-600 text-white' : 'bg-indigo-600 text-white',
                 ]"
-                :style="markerStyle(boxOf(s))"
+                :style="{ ...markerStyle(boxOf(s)), marginLeft: `${dupIndex(i) * 32}px` }"
                 :aria-label="`${i + 1}. ${partById.get(s.part)?.title[lang]}`"
                 :aria-pressed="selected === i"
                 @click="select(i)"
@@ -273,6 +297,17 @@ const activeBox = computed(() => {
           <section class="space-y-1">
             <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ t('lab.component') }}</h3>
             <code class="inline-block rounded-lg bg-slate-100 px-2 py-1 font-mono text-sm text-fuchsia-800 dark:bg-slate-800 dark:text-fuchsia-300">{{ part.component }}</code>
+          </section>
+
+          <section v-if="part.examples?.length" class="space-y-2">
+            <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ t('lab.examples') }}</h3>
+            <figure v-for="ex in part.examples" :key="ex.file" class="space-y-1 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-800 dark:bg-emerald-950/40">
+              <figcaption class="flex items-center gap-1.5 font-mono text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+                <AppIcon name="file-text" :size="13" /><span>{{ ex.file }}</span>
+              </figcaption>
+              <pre class="whitespace-pre-wrap break-words font-mono text-xs text-slate-800 dark:text-slate-200">{{ ex.value }}</pre>
+              <p v-if="ex.note" class="text-sm text-slate-700 dark:text-slate-300">{{ ex.note[lang] }}</p>
+            </figure>
           </section>
 
           <section class="space-y-3">
