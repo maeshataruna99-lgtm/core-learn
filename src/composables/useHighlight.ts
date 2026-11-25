@@ -9,13 +9,14 @@ export interface Token {
   style: Record<string, string>;
 }
 
-// Only the languages the cards use (ts, tsx, js, vue, java, sql, json, bash, yaml) are bundled.
+// Only the languages the cards use (ts, tsx, js, vue, java, php, sql, json, bash, yaml) are bundled.
 const LANGS = {
   typescript: () => import('shiki/langs/typescript.mjs'),
   tsx: () => import('shiki/langs/tsx.mjs'),
   javascript: () => import('shiki/langs/javascript.mjs'),
   vue: () => import('shiki/langs/vue.mjs'),
   java: () => import('shiki/langs/java.mjs'),
+  php: () => import('shiki/langs/php.mjs'),
   sql: () => import('shiki/langs/sql.mjs'),
   json: () => import('shiki/langs/json.mjs'),
   bash: () => import('shiki/langs/bash.mjs'),

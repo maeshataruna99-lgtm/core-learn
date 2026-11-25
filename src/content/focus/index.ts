@@ -1,6 +1,7 @@
 import type { FocusProject, FocusTopic } from '../../core/focus.ts';
 import { docExtractTopics } from './docextract.ts';
 import { rocketTopics } from './rocket.ts';
+import { simrsTopics } from './simrs.ts';
 import { splitBillTopics } from './splitbill.ts';
 
 // Study material for the core-ai-automation project. Numbers and claims follow the repo's README,
@@ -231,5 +232,13 @@ export const focusProjects: FocusProject[] = [
       id: 'Proyek Configurable Document Extraction-ku (Node 22, TypeScript, Fastify, React 19), bagian demi bagian: alasan tiap keputusan, alur pipeline-nya, kode di baliknya, dan pertanyaan wawancara yang mungkin muncul.' },
     repo: 'https://github.com/maeshataruna99-lgtm/configurable-document-extraction',
     topics: docExtractTopics,
+  },
+  {
+    id: 'simrs-rawat-jalan',
+    title: { en: 'SIMRS Rawat Jalan', id: 'SIMRS Rawat Jalan' },
+    intro: { en: 'My Outpatient Hospital Information System (Yii2 PHP 8.3, Node.js Express 5, React 19, PostgreSQL 16), part by part: single-writer boundary, RBAC, concurrency locks, outbox retries, SQL performance, and interview Q&As.',
+      id: 'Proyek Sistem Informasi Rumah Sakit Rawat Jalan-ku (Yii2 PHP 8.3, Node.js Express 5, React 19, PostgreSQL 16), bagian demi bagian: batas single-writer, RBAC, penguncian konkurensi, retry outbox, performa SQL, dan tanya jawab wawancara.' },
+    repo: 'https://github.com/maeshataruna99-lgtm/simrs-rawat-jalan',
+    topics: simrsTopics,
   },
 ];

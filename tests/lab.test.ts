@@ -20,9 +20,11 @@ describe('lab data', () => {
 });
 
 describe('lab quiz', () => {
-  it('gives every real-run screen a quiz', () => {
-    const real = labProjects.find((p) => p.id === 'cde-real')!;
-    for (const s of real.screens) expect(s.quiz?.length, s.id).toBeGreaterThanOrEqual(3);
+  it('gives every real-run and simrs screen a quiz', () => {
+    for (const id of ['cde-real', 'simrs']) {
+      const proj = labProjects.find((p) => p.id === id)!;
+      for (const s of proj.screens) expect(s.quiz?.length, `${id}/${s.id}`).toBeGreaterThanOrEqual(3);
+    }
   });
 
   it('rejects an answer index outside the options', () => {

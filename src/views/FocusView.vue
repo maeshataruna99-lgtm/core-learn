@@ -290,7 +290,7 @@ function rate(ok: boolean) {
           v-for="p in focusProjects"
           :key="p.id"
           :to="{ path: '/focus', query: { project: p.id } }"
-          class="inline-flex flex-1 items-center justify-center rounded-xl border px-4 text-center text-sm font-semibold transition-colors"
+          class="inline-flex min-w-32 flex-1 items-center justify-center whitespace-nowrap rounded-xl border px-4 text-center text-sm font-semibold transition-colors"
           :class="
             p.id === project.id
               ? 'border-indigo-700 bg-indigo-700 text-white dark:border-indigo-500 dark:bg-indigo-600'

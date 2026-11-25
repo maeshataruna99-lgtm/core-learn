@@ -15,6 +15,12 @@ const router = useRouter();
 const { store, toggleUnderstood } = useStore();
 const lang = computed(() => store.settings.language);
 
+const visibleTours = computed(() => {
+  const pid = typeof route.query.project === 'string' ? route.query.project : '';
+  if (!pid) return labTours;
+  const matched = labTours.filter((x) => x.steps.some((st) => st.project === pid));
+  return matched.length ? matched : labTours;
+});
 const tour = computed(() => labTours.find((x) => x.id === route.query.tour) ?? null);
 const at = ref(0);
 const finished = ref(false);
@@ -276,7 +282,7 @@ onBeforeUnmount(() => {
       </div>
       <div class="grid gap-3 md:grid-cols-2">
         <button
-          v-for="x in labTours"
+          v-for="x in visibleTours"
           :key="x.id"
           type="button"
           class="space-y-2 rounded-2xl border-2 border-slate-200 bg-white p-4 text-left transition-colors hover:border-fuchsia-500 dark:border-slate-800 dark:bg-slate-900"

@@ -1,5 +1,6 @@
 import type { LabProject } from '../../core/lab.ts';
 import { docExtractLab } from './docextract.ts';
 import { docExtractRealLab } from './docextractReal.ts';
+import { simrsLab } from './simrs.ts';
 
-export const labProjects: LabProject[] = [docExtractLab, docExtractRealLab];
+export const labProjects: LabProject[] = [docExtractLab, docExtractRealLab, simrsLab];
