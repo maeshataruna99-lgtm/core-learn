@@ -69,6 +69,8 @@ watch(at, () => {
 watch(tour, () => {
   at.value = 0;
   finished.value = false;
+  autoplay.value = false;
+  showDetail.value = false;
 });
 
 // Full screen: prefer native Fullscreen API, fall back to a viewport overlay when unavailable.

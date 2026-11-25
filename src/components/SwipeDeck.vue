@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import type { FocusCard } from '../core/focus.ts';
 import { useT } from '../i18n/index.ts';
 import AppIcon from './AppIcon.vue';
@@ -17,23 +17,29 @@ const weak = ref<FocusCard[]>([]);
 const dx = ref(0);
 const leaving = ref<0 | 1 | -1>(0);
 let startX: number | null = null;
+let leaveTimer: number | undefined;
 const dragging = ref(false);
 const card = computed(() => deck.value[at.value]);
 const progressFraction = computed(() => (deck.value.length ? at.value / deck.value.length : 0));
 
 function start(cards: FocusCard[]) {
-  deck.value = cards;
+  clearTimeout(leaveTimer);
+  deck.value = [...cards];
   at.value = 0;
   flipped.value = false;
   weak.value = [];
+  leaving.value = 0;
+  dx.value = 0;
 }
+watch(() => props.cards, (next) => start(next));
+onBeforeUnmount(() => clearTimeout(leaveTimer));
 const shuffled = (cards: FocusCard[]) => cards.map((c) => [Math.random(), c] as const).sort((a, b) => a[0] - b[0]).map(([, c]) => c);
 
 function decide(ok: boolean) {
   if (!card.value || leaving.value) return;
   if (!ok) weak.value.push(card.value);
   leaving.value = ok ? 1 : -1;
-  setTimeout(() => {
+  leaveTimer = window.setTimeout(() => {
     at.value++;
     flipped.value = false;
     leaving.value = 0;
@@ -44,7 +50,11 @@ function decide(ok: boolean) {
 function down(e: PointerEvent) {
   startX = e.clientX;
   dragging.value = true;
-  (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  try {
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  } catch {
+    /* ignore synthetic pointer events */
+  }
 }
 function move(e: PointerEvent) {
   if (startX !== null) dx.value = e.clientX - startX;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue';
+import { computed, reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import AppIcon from '../components/AppIcon.vue';
 import QuizRunner from '../components/QuizRunner.vue';
@@ -25,7 +25,23 @@ const types: CardType[] = ['flashcard', 'mcq', 'output', 'bugspot'];
 const session = ref<Card[] | null>(null);
 const runId = ref(0);
 
-const poolSize = computed(() => filterCards(cards, form).length);
+watch(
+  () => route.query.mode,
+  () => {
+    session.value = null;
+    form.length = interview.value ? 20 : store.settings.quizLength;
+    form.timer = interview.value ? true : store.settings.timer;
+    if (interview.value) {
+      form.types = form.types.filter((ty) => ty !== 'flashcard');
+    }
+  },
+);
+
+const eligibleCards = computed(() => {
+  const pool = filterCards(cards, form);
+  return interview.value ? pool.filter((c) => c.type !== 'flashcard') : pool;
+});
+const poolSize = computed(() => eligibleCards.value.length);
 
 function toggleItem<T>(arr: T[], val: T) {
   const idx = arr.indexOf(val);
@@ -62,7 +78,8 @@ function clearFilters() {
 }
 
 function start() {
-  const pool = filterCards(cards, form);
+  const pool = eligibleCards.value;
+  if (!pool.length) return;
   session.value = interview.value
     ? interviewSet(pool, form.length, Date.now())
     : reviseOrder(pool, store.progress, new Date().toISOString()).slice(0, form.length);
@@ -229,8 +246,9 @@ function start() {
       <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p class="text-sm text-slate-600 dark:text-slate-300">{{ t('practice.matching', { n: poolSize }) }}</p>
         <button
-          class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-700 px-6 py-3 font-semibold text-white shadow-xs transition-colors hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-500"
+          class="inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-700 px-6 py-3 font-semibold text-white shadow-xs transition-colors hover:bg-indigo-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-600 dark:hover:bg-indigo-500"
           type="submit"
+          :disabled="poolSize === 0"
         >
           <AppIcon name="play" :size="17" />
           <span>{{ t('practice.start') }}</span>

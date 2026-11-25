@@ -21,6 +21,7 @@ const flipped = ref(false);
 const chosen = ref<number | null>(null);
 const verdict = ref<boolean | null>(null);
 const showFixed = ref(false);
+const advanced = ref(false);
 
 const code = computed(() => (props.card.type === 'bugspot' ? props.card.code : ''));
 const fixedCode = computed(() => (props.card.type === 'bugspot' ? props.card.fixedCode : ''));
@@ -57,6 +58,12 @@ function pick(response: number | boolean) {
   verdict.value = isCorrect(props.card, response);
 }
 
+function advance() {
+  if (!answered.value || advanced.value) return;
+  advanced.value = true;
+  emit('next', verdict.value === true);
+}
+
 const optionState = (i: number) => {
   if (!answered.value || (props.card.type !== 'mcq' && props.card.type !== 'output')) {
     return 'border-slate-200 bg-white hover:border-indigo-400 hover:bg-indigo-50/40 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-indigo-500 dark:hover:bg-indigo-950/30';
@@ -72,19 +79,21 @@ const optionState = (i: number) => {
 
 function onKey(e: KeyboardEvent) {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
-  const tag = (e.target as HTMLElement | null)?.tagName;
+  const target = e.target as HTMLElement | null;
+  const tag = target?.tagName;
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  const onInteractive = Boolean(target?.closest('a, summary, button'));
 
   if (answered.value) {
-    if (e.key === 'Enter' || e.key.toLowerCase() === 'n') {
+    if (e.key.toLowerCase() === 'n' || (e.key === 'Enter' && !onInteractive)) {
       e.preventDefault();
-      emit('next', verdict.value === true);
+      advance();
     }
     return;
   }
 
   if (props.card.type === 'flashcard') {
-    if (!flipped.value && (e.key === ' ' || e.key === 'Enter')) {
+    if (!flipped.value && (e.key === ' ' || e.key === 'Enter') && !onInteractive) {
       e.preventDefault();
       flipped.value = true;
     } else if (flipped.value) {
@@ -169,33 +178,34 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
 
       <!-- Flashcard -->
       <template v-if="card.type === 'flashcard'">
-        <button
-          type="button"
-          class="group w-full rounded-xl border-2 p-5 text-left transition-all sm:p-6"
+        <div
+          class="w-full rounded-xl border-2 p-5 text-left transition-all sm:p-6"
           :class="
             flipped
               ? 'border-indigo-300 bg-indigo-50/40 dark:border-indigo-700 dark:bg-indigo-950/25'
-              : 'border-slate-200 bg-slate-50/60 hover:border-indigo-400 hover:bg-white dark:border-slate-700 dark:bg-slate-800/40 dark:hover:border-indigo-500'
+              : 'border-slate-200 bg-slate-50/60 dark:border-slate-700 dark:bg-slate-800/40'
           "
-          :aria-expanded="flipped"
-          @click="flipped = true"
         >
-          <span class="block text-lg font-semibold leading-snug text-slate-900 sm:text-xl dark:text-slate-50">
+          <p class="text-lg font-semibold leading-snug text-slate-900 sm:text-xl dark:text-slate-50">
             {{ card.front }}
-          </span>
+          </p>
 
           <Transition name="panel">
             <div v-if="flipped" class="mt-4 border-t border-indigo-200/80 pt-4 text-slate-800 dark:border-indigo-800/60 dark:text-slate-200">
               <FormattedText :text="card.back" />
             </div>
-            <div v-else class="mt-4 flex items-center justify-between gap-2 text-sm text-slate-600 dark:text-slate-300">
+            <div v-else class="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-slate-600 dark:text-slate-300">
               <span>{{ t('card.revealHint') }}</span>
-              <span class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-medium text-slate-800 shadow-2xs group-hover:border-indigo-400 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100">
+              <button
+                type="button"
+                class="inline-flex shrink-0 items-center gap-1 rounded-lg border border-slate-300 bg-white px-4 font-semibold text-slate-800 shadow-2xs transition-colors hover:border-indigo-400 hover:bg-indigo-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-100 dark:hover:border-indigo-500"
+                @click="flipped = true"
+              >
                 {{ t('card.reveal') }}
-              </span>
+              </button>
             </div>
           </Transition>
-        </button>
+        </div>
 
         <div v-if="flipped && !answered" class="grid grid-cols-2 gap-3">
           <button
@@ -388,8 +398,9 @@ onBeforeUnmount(() => window.removeEventListener('keydown', onKey));
 
           <button
             type="button"
-            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-700 px-4 py-3 font-semibold text-white shadow-xs transition-colors hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-500"
-            @click="emit('next', verdict === true)"
+            class="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-700 px-4 py-3 font-semibold text-white shadow-xs transition-colors hover:bg-indigo-800 disabled:opacity-60 dark:bg-indigo-600 dark:hover:bg-indigo-500"
+            :disabled="advanced"
+            @click="advance"
           >
             <span>{{ t('card.next') }}</span>
             <AppIcon name="chevron-right" :size="17" />

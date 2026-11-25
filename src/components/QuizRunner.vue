@@ -24,12 +24,37 @@ const seconds = ref(0);
 const results = ref<Record<string, boolean>>({});
 const missedCards = ref<Card[]>([]);
 
-let timer = props.timed ? window.setInterval(() => seconds.value++, 1000) : undefined;
-onBeforeUnmount(() => clearInterval(timer));
+let timer: number | undefined;
+function stopTimer() {
+  if (timer !== undefined) {
+    clearInterval(timer);
+    timer = undefined;
+  }
+}
+function startTimer() {
+  stopTimer();
+  if (props.timed && queue.value.length > 0 && !done.value) {
+    timer = window.setInterval(() => seconds.value++, 1000);
+  }
+}
+startTimer();
+onBeforeUnmount(stopTimer);
+
+watch(
+  () => props.timed,
+  () => {
+    if (props.timed) startTimer();
+    else stopTimer();
+  },
+);
 
 watch(
   () => props.cards,
   (nextCards) => {
+    const sameSequence =
+      nextCards.length === queue.value.length &&
+      nextCards.every((c, i) => c.id === queue.value[i]?.id);
+    if (sameSequence) return;
     queue.value = [...nextCards];
     index.value = 0;
     right.value = 0;
@@ -37,6 +62,8 @@ watch(
     seconds.value = 0;
     results.value = {};
     missedCards.value = [];
+    startTimer();
+    emit('step', { index: 0, results: {} });
   },
 );
 
@@ -59,7 +86,7 @@ function next(correct: boolean) {
 
   if (index.value + 1 >= queue.value.length) {
     done.value = true;
-    clearInterval(timer);
+    stopTimer();
     emit('finish', { right: right.value, total: queue.value.length });
   } else {
     index.value++;
@@ -76,10 +103,7 @@ function retryMissed() {
   seconds.value = 0;
   results.value = {};
   missedCards.value = [];
-  if (props.timed) {
-    clearInterval(timer);
-    timer = window.setInterval(() => seconds.value++, 1000);
-  }
+  startTimer();
   emit('step', { index: 0, results: {} });
 }
 
@@ -87,8 +111,11 @@ const clock = computed(() => `${Math.floor(seconds.value / 60)}:${String(seconds
 </script>
 
 <template>
-  <div v-if="queue.length === 0" class="rounded-2xl border border-slate-200 bg-white p-6 text-center dark:border-slate-800 dark:bg-slate-900">
+  <div v-if="queue.length === 0" class="space-y-4 rounded-2xl border border-slate-200 bg-white p-6 text-center dark:border-slate-800 dark:bg-slate-900">
     <p class="text-slate-600 dark:text-slate-300">{{ t('quiz.empty') }}</p>
+    <div v-if="$slots.done" class="flex flex-wrap justify-center gap-3">
+      <slot name="done" />
+    </div>
   </div>
 
   <!-- Completion Summary -->

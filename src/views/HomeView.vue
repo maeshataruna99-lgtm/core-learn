@@ -8,11 +8,11 @@ import { trackSummaries } from '../core/curriculum.ts';
 import { useT } from '../i18n/index.ts';
 
 const t = useT();
-const { store, dueCount, streak, cards } = useStore();
+const { store, dueCount, streak, cards, nowIso } = useStore();
 
 const masteredCount = computed(() => cards.filter((c) => (store.progress[c.id]?.box ?? 0) >= 4).length);
 const wikiDoneCount = computed(() => wikiEntries.filter((e) => store.understood[e.id]).length);
-const summaries = computed(() => trackSummaries(cards, store.progress, new Date().toISOString()));
+const summaries = computed(() => trackSummaries(cards, store.progress, nowIso.value));
 
 const tiles: { to: { name: string; query?: Record<string, string> }; title: 'home.learn' | 'home.revise' | 'home.interview'; text: 'home.learnText' | 'home.reviseText' | 'home.interviewText'; icon: IconName }[] = [
   { to: { name: 'learn' }, title: 'home.learn', text: 'home.learnText', icon: 'book-open' },
@@ -133,7 +133,7 @@ const tiles: { to: { name: string; query?: Record<string, string> }; title: 'hom
           </div>
           <div class="space-y-1">
             <div class="flex justify-between text-[11px] font-medium text-slate-600 dark:text-slate-300">
-              <span>{{ tr.due }} due</span>
+              <span>{{ t('learn.dueCount', { n: tr.due }) }}</span>
               <span>{{ tr.masteryPct }}%</span>
             </div>
             <div class="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" aria-hidden="true">

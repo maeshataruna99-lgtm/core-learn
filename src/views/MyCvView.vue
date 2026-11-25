@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
 import AppIcon from '../components/AppIcon.vue';
 import FormattedText from '../components/FormattedText.vue';
 import { useStore } from '../composables/useStore.ts';
@@ -10,13 +11,17 @@ import { CV_SECTIONS, cvKey } from '../core/mycv.ts';
 import { useT } from '../i18n/index.ts';
 
 const t = useT();
+const route = useRoute();
 const { store, toggleUnderstood } = useStore();
 const lang = computed(() => store.settings.language);
 
-const route = (await import('vue-router')).useRoute();
 const wikiById = new Map(wikiEntries.map((e) => [e.id, e]));
 const item = computed(() => (typeof route.query.item === 'string' ? cvItems.find((i) => i.id === route.query.item) : undefined));
 const shown = ref<Set<number>>(new Set());
+
+watch(() => item.value?.id, () => {
+  shown.value = new Set();
+});
 
 const explained = (id: string) => Boolean(store.understood[cvKey(id)]);
 const doneCount = computed(() => cvItems.filter((i) => explained(i.id)).length);

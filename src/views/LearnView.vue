@@ -7,6 +7,7 @@ import QuizRunner from '../components/QuizRunner.vue';
 import { useStore } from '../composables/useStore.ts';
 import { cardTitle, formatTopicLabel, trackSummaries } from '../core/curriculum.ts';
 import type { TopicSummary } from '../core/curriculum.ts';
+import { learnOrder } from '../core/selection.ts';
 import { LEVELS, TRACKS } from '../core/types.ts';
 import type { CardType, Level, Track } from '../core/types.ts';
 import { useT } from '../i18n/index.ts';
@@ -14,24 +15,12 @@ import { useT } from '../i18n/index.ts';
 const t = useT();
 const route = useRoute();
 const router = useRouter();
-const { cards, store } = useStore();
+const { cards, store, nowIso } = useStore();
 
 const qTrack = TRACKS.find((tr) => tr === route.query.track) ?? null;
 const qTopic = typeof route.query.topic === 'string' ? route.query.topic : null;
 const track = ref<Track | null>(qTrack);
 const topic = ref<string | null>(qTrack && qTopic && cards.some((c) => c.track === qTrack && c.topic === qTopic) ? qTopic : null);
-
-watch(
-  () => [route.query.track, route.query.topic],
-  ([nextTr, nextTp]) => {
-    const matchedTr = TRACKS.find((tr) => tr === nextTr) ?? null;
-    track.value = matchedTr;
-    topic.value =
-      matchedTr && typeof nextTp === 'string' && cards.some((c) => c.track === matchedTr && c.topic === nextTp)
-        ? nextTp
-        : null;
-  },
-);
 
 const searchQuery = ref('');
 const levelFilter = ref<Level | 'all'>('all');
@@ -42,7 +31,25 @@ const mobileOutlineOpen = ref(false);
 const activeStepIndex = ref(0);
 const sessionResults = ref<Record<string, boolean>>({});
 
-const nowIso = computed(() => new Date().toISOString());
+watch(
+  () => [route.query.track, route.query.topic],
+  ([nextTr, nextTp]) => {
+    const matchedTr = TRACKS.find((tr) => tr === nextTr) ?? null;
+    const matchedTp =
+      matchedTr && typeof nextTp === 'string' && cards.some((c) => c.track === matchedTr && c.topic === nextTp)
+        ? nextTp
+        : null;
+    const changed = matchedTr !== track.value || matchedTp !== topic.value;
+    track.value = matchedTr;
+    topic.value = matchedTp;
+    if (changed) {
+      activeStepIndex.value = 0;
+      sessionResults.value = {};
+      mobileOutlineOpen.value = false;
+    }
+  },
+);
+
 const summaries = computed(() => trackSummaries(cards, store.progress, nowIso.value));
 
 const trackIconMap: Record<Track, IconName> = {
@@ -90,6 +97,8 @@ const matchingTopicsAcrossTracks = computed(() => {
   for (const s of summaries.value) {
     for (const tp of s.topics) {
       if (levelFilter.value !== 'all' && tp.levels[levelFilter.value] === 0) continue;
+      if (statusFilter.value === 'due' && tp.due === 0) continue;
+      if (statusFilter.value === 'mastered' && tp.masteryPct < 80) continue;
       if (`${tp.topic} ${formatTopicLabel(tp.topic)}`.toLowerCase().includes(q)) hits.push(tp);
     }
   }
@@ -113,11 +122,11 @@ const filteredTopics = computed(() => {
   });
 });
 
-const activeTopicSummary = computed(
-  () => activeTrackSummary.value?.topics.find((tp) => tp.topic === topic.value) ?? null,
-);
-
-const sessionCards = computed(() => activeTopicSummary.value?.cards ?? []);
+// Decoupled from store.progress so answering a card never produces a new array ref that resets QuizRunner.
+const sessionCards = computed(() => {
+  if (!track.value || !topic.value) return [];
+  return learnOrder(cards.filter((c) => c.track === track.value && c.topic === topic.value));
+});
 
 const nextTopicInTrack = computed(() => {
   if (!activeTrackSummary.value || !topic.value) return null;
@@ -130,7 +139,10 @@ function selectTrack(tr: Track | null) {
   track.value = tr;
   topic.value = null;
   searchQuery.value = '';
-  void router.replace({ path: '/learn', query: tr ? { track: tr } : {} });
+  activeStepIndex.value = 0;
+  sessionResults.value = {};
+  mobileOutlineOpen.value = false;
+  void router.push({ path: '/learn', query: tr ? { track: tr } : {} });
 }
 
 function selectTopic(tr: Track, tp: string) {
@@ -139,7 +151,7 @@ function selectTopic(tr: Track, tp: string) {
   activeStepIndex.value = 0;
   sessionResults.value = {};
   mobileOutlineOpen.value = false;
-  void router.replace({ path: '/learn', query: { track: tr, topic: tp } });
+  void router.push({ path: '/learn', query: { track: tr, topic: tp } });
 }
 
 function toggleSyllabus(tpKey: string) {
@@ -493,13 +505,13 @@ function onQuizStep(payload: { index: number; results: Record<string, boolean> }
                     <span class="min-w-0 flex-1 truncate font-medium text-slate-800 dark:text-slate-100">{{ cardTitle(c) }}</span>
                     <span v-if="c.primer" class="inline-flex items-center gap-1 rounded bg-amber-100/80 px-1.5 py-0.5 text-[11px] font-medium text-amber-900 dark:bg-amber-950/80 dark:text-amber-200">
                       <AppIcon name="lightbulb" :size="11" />
-                      Primer
+                      {{ t('learn.primerBadge') }}
                     </span>
                     <span class="rounded bg-white px-2 py-0.5 text-[11px] font-medium text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700">
                       {{ t(`level.${c.level}`) }}
                     </span>
                     <span class="font-mono text-[11px] text-slate-500 dark:text-slate-400">
-                      {{ store.progress[c.id]?.box ? `B${store.progress[c.id]!.box}` : 'New' }}
+                      {{ store.progress[c.id]?.box ? `B${store.progress[c.id]!.box}` : t('learn.newBadge') }}
                     </span>
                   </li>
                 </ol>

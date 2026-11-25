@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 
 export const router = createRouter({
   history: createWebHistory(),
+  scrollBehavior: () => ({ top: 0 }),
   routes: [
     { path: '/', name: 'home', component: () => import('../views/HomeView.vue') },
     { path: '/learn', name: 'learn', component: () => import('../views/LearnView.vue') },
@@ -12,5 +13,6 @@ export const router = createRouter({
     { path: '/focus', name: 'focus', component: () => import('../views/FocusView.vue') },
     { path: '/progress', name: 'progress', component: () => import('../views/ProgressView.vue') },
     { path: '/settings', name: 'settings', component: () => import('../views/SettingsView.vue') },
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('../views/NotFoundView.vue') },
   ],
 });

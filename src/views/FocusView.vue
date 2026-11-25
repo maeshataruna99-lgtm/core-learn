@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import AppIcon from '../components/AppIcon.vue';
 import FormattedText from '../components/FormattedText.vue';
@@ -40,6 +40,19 @@ const revealed = ref(false);
 const draft = ref('');
 const weak = ref<SimQuestion[]>([]);
 const current = computed(() => queue.value?.[at.value]);
+
+watch(
+  () => [route.query.project, route.query.item],
+  () => {
+    shown.value = new Set();
+    queue.value = null;
+    deckOpen.value = false;
+    at.value = 0;
+    revealed.value = false;
+    draft.value = '';
+    weak.value = [];
+  },
+);
 
 function startSim(questions: SimQuestion[]) {
   queue.value = questions;

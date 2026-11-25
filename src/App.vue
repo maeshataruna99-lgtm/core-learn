@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch, watchEffect } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
 import AppIcon from './components/AppIcon.vue';
 import type { IconName } from './components/AppIcon.vue';
@@ -76,10 +76,25 @@ watch(() => route.fullPath, () => {
   mobileDrawerOpen.value = false;
 });
 
+const systemDark = ref(
+  typeof window !== 'undefined' && window.matchMedia?.('(prefers-color-scheme: dark)').matches,
+);
+let mql: MediaQueryList | null = null;
+const onMediaChange = (e: MediaQueryListEvent) => {
+  systemDark.value = e.matches;
+};
+onMounted(() => {
+  if (typeof window === 'undefined' || !window.matchMedia) return;
+  mql = window.matchMedia('(prefers-color-scheme: dark)');
+  systemDark.value = mql.matches;
+  mql.addEventListener('change', onMediaChange);
+});
+onBeforeUnmount(() => {
+  mql?.removeEventListener('change', onMediaChange);
+});
+
 watchEffect(() => {
-  const dark =
-    store.settings.theme === 'dark' ||
-    (store.settings.theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const dark = store.settings.theme === 'dark' || (store.settings.theme === 'system' && systemDark.value);
   document.documentElement.classList.toggle('dark', dark);
   document.documentElement.lang = store.settings.language;
 });
@@ -105,11 +120,11 @@ watchEffect(() => {
       <div class="mx-3 mt-3 grid grid-cols-2 gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2 text-xs dark:border-slate-800 dark:bg-slate-950/60">
         <RouterLink to="/practice?mode=revise" class="flex items-center gap-1.5 rounded-lg px-2 py-1 font-medium text-indigo-700 hover:bg-white dark:text-indigo-300 dark:hover:bg-slate-900">
           <AppIcon name="sparkles" :size="14" />
-          <span class="truncate">{{ dueCount }} due</span>
+          <span class="truncate">{{ t('nav.dueShort', { n: dueCount }) }}</span>
         </RouterLink>
         <div class="flex items-center justify-end gap-1 px-2 py-1 font-medium text-amber-700 dark:text-amber-300">
           <AppIcon name="flame" :size="14" />
-          <span>{{ streak }}d</span>
+          <span>{{ t('nav.streakShort', { n: streak }) }}</span>
         </div>
       </div>
 
@@ -141,7 +156,7 @@ watchEffect(() => {
           @click="cycleTheme"
         >
           <AppIcon :name="themeIcon" :size="15" />
-          <span class="capitalize">{{ store.settings.theme }}</span>
+          <span>{{ t(`settings.${store.settings.theme}`) }}</span>
         </button>
         <button
           type="button"

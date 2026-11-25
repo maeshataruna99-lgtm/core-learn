@@ -55,8 +55,11 @@ export async function highlight(code: string, language: string): Promise<Token[]
 
 export function useHighlightedLines(code: () => string, language: () => string): Ref<Token[][] | null> {
   const lines = ref<Token[][] | null>(null);
+  let reqId = 0;
   const run = async () => {
-    lines.value = await highlight(code(), language());
+    const id = ++reqId;
+    const res = await highlight(code(), language());
+    if (id === reqId) lines.value = res;
   };
   onMounted(run);
   watch([code, language], run);

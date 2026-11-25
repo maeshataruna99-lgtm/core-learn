@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import AppIcon from '../components/AppIcon.vue';
 import FormattedText from '../components/FormattedText.vue';
@@ -35,8 +35,21 @@ const donePct = computed(() => (wikiEntries.length ? Math.round((doneCount.value
 function startQuiz() {
   quizSet.value = quizPool(wikiEntries, store.understood, category.value, includeKnown.value);
   quizRun.value += 1;
-  void router.push({ path: '/wiki', query: { mode: 'quiz' } });
+  if (!quizOn.value) {
+    void router.push({ path: '/wiki', query: { mode: 'quiz' } });
+  }
 }
+
+watch(
+  quizOn,
+  (on) => {
+    if (on && !quizSet.value.length) {
+      quizSet.value = quizPool(wikiEntries, store.understood, category.value, includeKnown.value);
+      quizRun.value += 1;
+    }
+  },
+  { immediate: true },
+);
 const open = (id: string) => ({ path: '/wiki', query: { term: id } });
 const catLabel = (c: WikiCategory) => t(`wiki.cat.${c}`);
 </script>

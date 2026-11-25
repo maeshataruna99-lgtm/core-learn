@@ -69,18 +69,15 @@ function next(understood: boolean) {
         </div>
       </div>
 
-      <button
-        type="button"
+      <div
         class="w-full rounded-xl border-2 p-5 text-left transition-colors"
         :class="
           revealed
             ? 'border-indigo-300 bg-indigo-50/40 dark:border-indigo-700 dark:bg-indigo-950/25'
-            : 'border-slate-200 bg-slate-50/70 hover:border-indigo-400 dark:border-slate-700 dark:bg-slate-800/40'
+            : 'border-slate-200 bg-slate-50/70 dark:border-slate-700 dark:bg-slate-800/40'
         "
-        :aria-expanded="revealed"
-        @click="revealed = true"
       >
-        <span class="block text-xl font-bold text-slate-900 dark:text-slate-50">{{ current.term }}</span>
+        <p class="text-xl font-bold text-slate-900 dark:text-slate-50">{{ current.term }}</p>
         <Transition name="panel">
           <div v-if="revealed" class="mt-4 space-y-3 border-t border-indigo-200/70 pt-4 dark:border-indigo-800/60">
             <FormattedText :text="current.meaning[lang]" />
@@ -88,9 +85,9 @@ function next(understood: boolean) {
               {{ current.analogy[lang] }}
             </p>
           </div>
-          <span v-else class="mt-3 block text-sm text-slate-600 dark:text-slate-300">{{ t('wiki.quizPrompt') }}</span>
+          <p v-else class="mt-3 text-sm text-slate-600 dark:text-slate-300">{{ t('wiki.quizPrompt') }}</p>
         </Transition>
-      </button>
+      </div>
 
       <div v-if="!revealed" class="space-y-3">
         <label class="block text-sm font-medium text-slate-700 dark:text-slate-200" :for="`say-${current.id}`">

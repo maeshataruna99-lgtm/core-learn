@@ -1,4 +1,4 @@
-import { migrate } from './storage.ts';
+import { isValidProgressEntry, migrate } from './storage.ts';
 import type { Store } from './types.ts';
 
 export function exportStore(store: Store, now: string): string {
@@ -9,16 +9,6 @@ export type ImportResult =
   | { ok: true; store: Store; cardCount: number }
   | { ok: false; error: string };
 
-const isProgress = (p: unknown): boolean => {
-  if (!p || typeof p !== 'object') return false;
-  const x = p as Record<string, unknown>;
-  return (
-    typeof x.box === 'number' && x.box >= 1 && x.box <= 5 &&
-    typeof x.dueAt === 'string' && typeof x.right === 'number' &&
-    typeof x.wrong === 'number' && typeof x.lastSeenAt === 'string'
-  );
-};
-
 export function parseImport(text: string): ImportResult {
   let raw: unknown;
   try {
@@ -26,9 +16,18 @@ export function parseImport(text: string): ImportResult {
   } catch {
     return { ok: false, error: 'Not valid JSON' };
   }
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { ok: false, error: 'Unsupported file or version' };
+  }
+  const o = raw as Record<string, unknown>;
+  if (o.version !== 1 || !o.progress || typeof o.progress !== 'object' || Array.isArray(o.progress)) {
+    return { ok: false, error: 'Unsupported file or version' };
+  }
+  const entries = Object.values(o.progress as Record<string, unknown>);
+  if (!entries.every(isValidProgressEntry)) {
+    return { ok: false, error: 'Progress data is malformed' };
+  }
   const store = migrate(raw);
-  if (!store) return { ok: false, error: 'Unsupported file or version' };
-  const entries = Object.values(store.progress);
-  if (!entries.every(isProgress)) return { ok: false, error: 'Progress data is malformed' };
+  if (!store) return { ok: false, error: 'Progress data is malformed' };
   return { ok: true, store, cardCount: entries.length };
 }

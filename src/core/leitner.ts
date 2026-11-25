@@ -32,15 +32,30 @@ export function isDue(p: CardProgress | undefined, now: string): boolean {
   return !p || p.dueAt <= now;
 }
 
-const dayBefore = (d: string) =>
-  new Date(new Date(d + 'T00:00:00Z').getTime() - DAY_MS).toISOString().slice(0, 10);
+/** Format a Date into the user's local calendar day (YYYY-MM-DD). */
+export function localDay(d: Date = new Date()): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+const dayBefore = (d: string): string | null => {
+  if (!DAY_RE.test(d)) return null;
+  const ms = Date.parse(`${d}T00:00:00Z`);
+  if (Number.isNaN(ms)) return null;
+  return new Date(ms - DAY_MS).toISOString().slice(0, 10);
+};
 
 /** Consecutive days (ending today or yesterday) with at least one review. Days are YYYY-MM-DD. */
 export function streak(seenDays: string[], today: string): number {
-  const days = new Set(seenDays);
-  let cursor = days.has(today) ? today : dayBefore(today);
+  if (!DAY_RE.test(today)) return 0;
+  const days = new Set(seenDays.filter((d) => DAY_RE.test(d)));
+  let cursor: string | null = days.has(today) ? today : dayBefore(today);
   let n = 0;
-  while (days.has(cursor)) {
+  while (cursor && days.has(cursor)) {
     n++;
     cursor = dayBefore(cursor);
   }

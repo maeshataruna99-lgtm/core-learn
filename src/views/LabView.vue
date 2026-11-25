@@ -18,7 +18,7 @@ const lang = computed(() => store.settings.language);
 
 const presenting = computed(() => route.query.mode === 'present');
 function startPresentation() {
-  void router.replace({ query: { project: project.value.id, mode: 'present' } });
+  void router.push({ query: { project: project.value.id, mode: 'present' } });
 }
 
 const project = computed(() => labProjects.find((p) => p.id === route.query.project) ?? labProjects[0]!);
@@ -55,13 +55,14 @@ function select(i: number) {
 }
 function step(delta: number) {
   const n = screen.value.spots.length;
+  if (!n) return;
   select(selected.value === null ? 0 : (selected.value + delta + n) % n);
 }
 function goScreen(i: number) {
-  void router.replace({ query: { ...route.query, screen: project.value.screens[i]!.id } });
+  void router.push({ query: { ...route.query, screen: project.value.screens[i]!.id } });
 }
 function goProject(id: string) {
-  void router.replace({ query: { project: id } });
+  void router.push({ query: { project: id } });
 }
 watch([screenIndex, project], () => {
   selected.value = null;
@@ -139,7 +140,8 @@ function nextFind() {
 }
 
 function onKey(e: KeyboardEvent) {
-  if (presenting.value || findQueue.value || (e.target as HTMLElement).closest('input, textarea, select')) return;
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (presenting.value || findQueue.value || quizAt.value !== null || (e.target as HTMLElement | null)?.closest('input, textarea, select')) return;
   if (e.key === 'ArrowRight') step(1);
   else if (e.key === 'ArrowLeft') step(-1);
   else if (e.key === 'Escape') selected.value = null;
@@ -168,7 +170,7 @@ const activeBox = computed(() => {
       <p v-if="!presenting" class="max-w-3xl text-slate-600 dark:text-slate-300">{{ project.intro[lang] }}</p>
       <div v-if="!presenting" class="flex flex-wrap items-center gap-3">
         <div class="h-2.5 min-w-40 flex-1 overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800" role="progressbar" :aria-valuenow="foundTotal" aria-valuemin="0" :aria-valuemax="project.parts.length" :aria-label="t('lab.progress', { done: foundTotal, total: project.parts.length })">
-          <div class="h-full rounded-full bg-gradient-to-r from-indigo-600 to-fuchsia-500 transition-all duration-500" :style="{ width: `${(foundTotal / project.parts.length) * 100}%` }" />
+          <div class="h-full rounded-full bg-gradient-to-r from-indigo-600 to-fuchsia-500 transition-all duration-500" :style="{ width: `${project.parts.length ? (foundTotal / project.parts.length) * 100 : 0}%` }" />
         </div>
         <span class="text-sm font-semibold text-slate-700 dark:text-slate-200">{{ t('lab.progress', { done: foundTotal, total: project.parts.length }) }}</span>
         <button

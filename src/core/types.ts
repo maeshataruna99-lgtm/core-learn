@@ -75,4 +75,6 @@ export interface Store {
   settings: Settings;
   /** Wiki term id -> ISO time the learner marked it "I understand". Added after v1 shipped, so migrate() fills it. */
   understood: Record<string, string>;
+  /** Local calendar days (YYYY-MM-DD) with at least one recorded review; preserved even when a card is re-reviewed. */
+  activityDays: string[];
 }

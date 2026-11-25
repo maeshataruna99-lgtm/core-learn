@@ -2,60 +2,84 @@
 import { computed, ref } from 'vue';
 import AppIcon from '../components/AppIcon.vue';
 import { useStore } from '../composables/useStore.ts';
-import { boxDistribution, trackSummaries } from '../core/curriculum.ts';
+import { boxDistribution, cardTitle, formatTopicLabel, overallMasteryPct, trackSummaries } from '../core/curriculum.ts';
 import { exportStore, parseImport } from '../core/exportImport.ts';
+import { pruneUnknown } from '../core/storage.ts';
 import type { Store } from '../core/types.ts';
 import { useT } from '../i18n/index.ts';
 
 const t = useT();
-const { cards, store, replace, reset } = useStore();
+const { cards, cardIds, store, nowIso, replace, reset } = useStore();
 const message = ref('');
+const messageKind = ref<'ok' | 'error'>('ok');
 const pending = ref<{ store: Store; cardCount: number } | null>(null);
 
-const summaries = computed(() => trackSummaries(cards, store.progress, new Date().toISOString()));
+const summaries = computed(() => trackSummaries(cards, store.progress, nowIso.value));
 const boxes = computed(() => boxDistribution(cards, store.progress));
 const totalSeen = computed(() => cards.filter((c) => Boolean(store.progress[c.id])).length);
-const overallPct = computed(() => {
-  if (!summaries.value.length) return 0;
-  const sum = summaries.value.reduce((acc, s) => acc + s.masteryPct * s.total, 0);
-  const total = summaries.value.reduce((acc, s) => acc + s.total, 0);
-  return total ? Math.round(sum / total) : 0;
-});
+const overallPct = computed(() => overallMasteryPct(cards, store.progress));
 
+// Cards missed before that have not yet reached mastery (box < 4), worst first.
 const weak = computed(() =>
   cards
-    .filter((c) => (store.progress[c.id]?.wrong ?? 0) > 0)
-    .sort((a, b) => store.progress[b.id]!.wrong - store.progress[a.id]!.wrong)
+    .filter((c) => {
+      const p = store.progress[c.id];
+      return Boolean(p && p.wrong > 0 && p.box < 4);
+    })
+    .sort((a, b) => {
+      const pa = store.progress[a.id]!;
+      const pb = store.progress[b.id]!;
+      return pb.wrong - pa.wrong || pa.box - pb.box;
+    })
     .slice(0, 10),
 );
 
+function boxBarHeight(count: number): string {
+  if (count <= 0 || !cards.length) return '0%';
+  return `${Math.max(6, Math.round((count / cards.length) * 100))}%`;
+}
+
 function doExport() {
   const blob = new Blob([exportStore({ ...store }, new Date().toISOString())], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
+  a.href = url;
   a.download = `code-learn-${new Date().toISOString().slice(0, 10)}.json`;
   a.click();
-  URL.revokeObjectURL(a.href);
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 async function onFile(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0];
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
   if (!file) return;
-  const res = parseImport(await file.text());
-  if (res.ok) {
-    pending.value = res;
-    message.value = '';
-  } else {
-    pending.value = null;
-    message.value = t('progress.failed', { e: res.error });
+  try {
+    const res = parseImport(await file.text());
+    if (res.ok) {
+      const validCount = Object.keys(pruneUnknown(res.store.progress, cardIds)).length;
+      pending.value = { store: res.store, cardCount: validCount };
+      message.value = '';
+    } else {
+      pending.value = null;
+      messageKind.value = 'error';
+      message.value = t('progress.failed', { e: res.error });
+    }
+  } finally {
+    input.value = '';
   }
 }
 function confirmImport() {
-  if (pending.value) replace(pending.value.store);
+  if (!pending.value) return;
+  replace(pending.value.store);
   pending.value = null;
+  messageKind.value = 'ok';
   message.value = t('progress.imported');
 }
 function doReset() {
-  if (window.confirm(t('progress.resetConfirm'))) reset();
+  if (!window.confirm(t('progress.resetConfirm'))) return;
+  reset();
+  pending.value = null;
+  messageKind.value = 'ok';
+  message.value = t('progress.resetDone');
 }
 </script>
 
@@ -100,9 +124,10 @@ function doReset() {
           <div v-for="b in boxes" :key="b.key" class="flex flex-col items-center gap-1.5">
             <div class="flex h-16 w-full items-end overflow-hidden rounded-lg bg-slate-100 p-1 dark:bg-slate-800">
               <div
+                data-testid="box-bar"
                 class="w-full rounded-sm transition-all duration-300"
-                :class="b.key === 'unseen' ? 'bg-slate-400 dark:bg-slate-600' : b.key >= 4 ? 'bg-emerald-600 dark:bg-emerald-400' : 'bg-indigo-600 dark:bg-indigo-400'"
-                :style="{ height: `${cards.length ? Math.max(8, Math.round((b.count / cards.length) * 100)) : 8}%` }"
+                :class="b.count === 0 ? 'bg-transparent' : b.key === 'unseen' ? 'bg-slate-400 dark:bg-slate-600' : b.key >= 4 ? 'bg-emerald-600 dark:bg-emerald-400' : 'bg-indigo-600 dark:bg-indigo-400'"
+                :style="{ height: boxBarHeight(b.count) }"
               />
             </div>
             <span class="font-mono text-xs font-bold text-slate-900 dark:text-slate-100">{{ b.count }}</span>
@@ -151,15 +176,24 @@ function doReset() {
       <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ t('progress.weak') }}</h2>
       <p v-if="!weak.length" class="text-sm text-slate-600 dark:text-slate-300">{{ t('progress.none') }}</p>
       <ul v-else class="grid gap-2 sm:grid-cols-2">
-        <li
-          v-for="c in weak"
-          :key="c.id"
-          class="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm dark:border-slate-800 dark:bg-slate-950/50"
-        >
-          <span class="truncate font-mono text-xs font-medium text-slate-800 dark:text-slate-200">{{ c.id }}</span>
-          <span class="shrink-0 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-800 dark:bg-rose-950/70 dark:text-rose-200">
-            {{ t('progress.wrong', { n: store.progress[c.id]!.wrong }) }}
-          </span>
+        <li v-for="c in weak" :key="c.id">
+          <RouterLink
+            data-testid="weak-card-link"
+            :to="{ path: '/learn', query: { track: c.track, topic: c.topic } }"
+            class="group flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3.5 py-2.5 text-sm transition-colors hover:border-indigo-400 hover:bg-indigo-50/40 dark:border-slate-800 dark:bg-slate-950/50 dark:hover:border-indigo-500 dark:hover:bg-indigo-950/30"
+          >
+            <div class="min-w-0">
+              <p class="truncate font-medium text-slate-900 group-hover:text-indigo-700 dark:text-slate-100 dark:group-hover:text-indigo-300">
+                {{ cardTitle(c) }}
+              </p>
+              <p class="truncate text-xs text-slate-500 dark:text-slate-400">
+                {{ t(`track.${c.track}`) }} · {{ formatTopicLabel(c.topic) }}
+              </p>
+            </div>
+            <span class="shrink-0 rounded-full bg-rose-50 px-2.5 py-0.5 text-xs font-semibold text-rose-800 dark:bg-rose-950/70 dark:text-rose-200">
+              {{ t('progress.wrong', { n: store.progress[c.id]!.wrong }) }}
+            </span>
+          </RouterLink>
         </li>
       </ul>
     </section>
@@ -170,18 +204,18 @@ function doReset() {
       <div class="flex flex-wrap items-center gap-3">
         <button
           type="button"
-          class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100"
+          class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 font-semibold text-slate-800 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700"
           @click="doExport"
         >
           {{ t('progress.export') }}
         </button>
-        <label class="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 font-semibold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100">
+        <label class="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 font-semibold text-slate-800 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:hover:bg-slate-700">
           <span>{{ t('progress.import') }}</span>
           <input type="file" accept="application/json" class="sr-only" @change="onFile" />
         </label>
         <button
           type="button"
-          class="ml-auto inline-flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 px-4 font-semibold text-rose-800 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-200"
+          class="ml-auto inline-flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-50 px-4 font-semibold text-rose-800 transition-colors hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/60 dark:text-rose-200 dark:hover:bg-rose-900/60"
           @click="doReset"
         >
           <AppIcon name="rotate-ccw" :size="15" />
@@ -194,7 +228,14 @@ function doReset() {
         <button type="button" class="rounded-lg bg-indigo-700 px-3.5 font-semibold text-white" @click="confirmImport">{{ t('progress.replace') }}</button>
         <button type="button" class="rounded-lg border border-slate-300 px-3.5 dark:border-slate-700" @click="pending = null">{{ t('progress.cancel') }}</button>
       </div>
-      <p v-if="message" class="text-sm font-medium text-emerald-700 dark:text-emerald-300" role="status">{{ message }}</p>
+      <p
+        v-if="message"
+        class="text-sm font-medium"
+        :class="messageKind === 'error' ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'"
+        :role="messageKind === 'error' ? 'alert' : 'status'"
+      >
+        {{ message }}
+      </p>
     </section>
   </div>
 </template>

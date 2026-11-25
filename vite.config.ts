@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'prompt',
       includeAssets: ['favicon.svg'],
       workbox: {
-        // Precache the app shell and all lazy chunks (content is bundled into JS).
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // Precache the app shell, screenshots, and lazy chunks (content is bundled into JS).
+        globPatterns: ['**/*.{js,css,html,svg,png,jpg,woff2}'],
         navigateFallback: '/index.html',
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
       },

@@ -11,6 +11,7 @@ export interface TopicSummary {
   due: number;
   seen: number;
   mastered: number;
+  masterySum: number;
   masteryPct: number;
   levels: Record<Level, number>;
   types: Record<CardType, number>;
@@ -23,6 +24,7 @@ export interface TrackSummary {
   due: number;
   seen: number;
   mastered: number;
+  masterySum: number;
   masteryPct: number;
   levels: Record<Level, number>;
 }
@@ -83,6 +85,7 @@ export function summarizeTopic(track: Track, topic: string, topicCards: Card[], 
     due,
     seen,
     mastered,
+    masterySum,
     masteryPct: ordered.length ? Math.round((masterySum / ordered.length) * 100) : 0,
     levels,
     types,
@@ -108,14 +111,14 @@ export function trackSummaries(cards: Card[], progress: ProgressMap, now: string
     let due = 0;
     let seen = 0;
     let mastered = 0;
-    let weightedMastery = 0;
+    let masterySum = 0;
 
     for (const tp of topics) {
       total += tp.total;
       due += tp.due;
       seen += tp.seen;
       mastered += tp.mastered;
-      weightedMastery += tp.masteryPct * tp.total;
+      masterySum += tp.masterySum;
       for (const lv of LEVELS) levels[lv] += tp.levels[lv];
     }
 
@@ -126,10 +129,19 @@ export function trackSummaries(cards: Card[], progress: ProgressMap, now: string
       due,
       seen,
       mastered,
-      masteryPct: total ? Math.round(weightedMastery / total) : 0,
+      masterySum,
+      masteryPct: total ? Math.round((masterySum / total) * 100) : 0,
       levels,
     };
   }).filter((t) => t.total > 0);
+}
+
+/** Overall mastery percentage computed directly from raw card mastery without intermediate rounding drift. */
+export function overallMasteryPct(cards: Card[], progress: ProgressMap): number {
+  if (!cards.length) return 0;
+  let sum = 0;
+  for (const c of cards) sum += mastery(progress[c.id]);
+  return Math.round((sum / cards.length) * 100);
 }
 
 export function boxDistribution(cards: Card[], progress: ProgressMap): BoxBucket[] {
