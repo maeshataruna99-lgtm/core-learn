@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import AppIcon from '../components/AppIcon.vue';
 import FormattedText from '../components/FormattedText.vue';
@@ -40,6 +40,18 @@ const revealed = ref(false);
 const draft = ref('');
 const weak = ref<SimQuestion[]>([]);
 const current = computed(() => queue.value?.[at.value]);
+const projectNavRef = ref<HTMLElement | null>(null);
+
+function scrollActiveProjectTab() {
+  nextTick(() => {
+    const activeEl = projectNavRef.value?.querySelector<HTMLElement>('[aria-current="page"]');
+    if (activeEl && typeof activeEl.scrollIntoView === 'function') {
+      activeEl.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  });
+}
+
+onMounted(scrollActiveProjectTab);
 
 watch(
   () => [route.query.project, route.query.item],
@@ -51,6 +63,7 @@ watch(
     revealed.value = false;
     draft.value = '';
     weak.value = [];
+    scrollActiveProjectTab();
   },
 );
 
@@ -67,6 +80,70 @@ function rate(ok: boolean) {
   revealed.value = false;
   draft.value = '';
 }
+
+// 90-minute live coding timer (shown on the MGS Live Coding project).
+const TIMER_PRESETS = [
+  { id: 'full', label: '90m', seconds: 90 * 60 },
+  { id: 'part1', label: 'Part 1 · 25m', seconds: 25 * 60 },
+  { id: 'part2', label: 'Part 2 · 40m', seconds: 40 * 60 },
+  { id: 'part3', label: 'Part 3 · 25m', seconds: 25 * 60 },
+] as const;
+
+const timerPreset = ref<(typeof TIMER_PRESETS)[number]['id']>('full');
+const timerTotal = ref<number>(90 * 60);
+const timerLeft = ref<number>(90 * 60);
+const timerRunning = ref(false);
+let timerHandle: ReturnType<typeof setInterval> | null = null;
+
+function stopTimer() {
+  if (timerHandle !== null) {
+    clearInterval(timerHandle);
+    timerHandle = null;
+  }
+  timerRunning.value = false;
+}
+
+function selectTimerPreset(id: (typeof TIMER_PRESETS)[number]['id']) {
+  const found = TIMER_PRESETS.find((p) => p.id === id) ?? TIMER_PRESETS[0];
+  stopTimer();
+  timerPreset.value = found.id;
+  timerTotal.value = found.seconds;
+  timerLeft.value = found.seconds;
+}
+
+function toggleTimer() {
+  if (timerRunning.value) {
+    stopTimer();
+    return;
+  }
+  if (timerLeft.value <= 0) timerLeft.value = timerTotal.value;
+  timerRunning.value = true;
+  timerHandle = setInterval(() => {
+    if (timerLeft.value <= 1) {
+      timerLeft.value = 0;
+      stopTimer();
+    } else {
+      timerLeft.value--;
+    }
+  }, 1000);
+}
+
+function resetTimer() {
+  stopTimer();
+  timerLeft.value = timerTotal.value;
+}
+
+const timerDisplay = computed(() => {
+  const mins = Math.floor(timerLeft.value / 60);
+  const secs = timerLeft.value % 60;
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+});
+
+const timerProgressPct = computed(() =>
+  timerTotal.value > 0 ? Math.round(((timerTotal.value - timerLeft.value) / timerTotal.value) * 100) : 0,
+);
+
+onBeforeUnmount(stopTimer);
 </script>
 
 <template>
@@ -298,20 +375,25 @@ function rate(ok: boolean) {
 
     <!-- Focus Overview -->
     <template v-else>
-      <nav :aria-label="t('focus.projects')" class="flex flex-wrap gap-2">
+      <nav
+        ref="projectNavRef"
+        :aria-label="t('focus.projects')"
+        class="no-scrollbar -mx-4 flex flex-nowrap gap-2 overflow-x-auto px-4 pb-1 snap-x scroll-px-4 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0"
+      >
         <RouterLink
           v-for="p in focusProjects"
           :key="p.id"
           :to="{ path: '/focus', query: { project: p.id } }"
-          class="inline-flex min-w-32 flex-1 items-center justify-center whitespace-nowrap rounded-xl border px-4 text-center text-sm font-semibold transition-colors"
+          class="inline-flex shrink-0 snap-start items-center justify-center gap-1.5 whitespace-nowrap rounded-xl border px-3.5 text-sm font-semibold transition-colors"
           :class="
             p.id === project.id
-              ? 'border-indigo-700 bg-indigo-700 text-white dark:border-indigo-500 dark:bg-indigo-600'
-              : 'border-slate-300 bg-white text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100'
+              ? 'border-indigo-700 bg-indigo-700 text-white shadow-2xs dark:border-indigo-500 dark:bg-indigo-600'
+              : 'border-slate-300 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800'
           "
           :aria-current="p.id === project.id ? 'page' : undefined"
         >
-          {{ p.title[lang] }}
+          <AppIcon v-if="p.id === 'mgs-live-coding'" name="terminal" :size="15" />
+          <span>{{ p.title[lang] }}</span>
         </RouterLink>
       </nav>
 
@@ -361,6 +443,85 @@ function rate(ok: boolean) {
           <span>{{ t('focus.deckStart', { total: focusCards(focusTopics).length }) }}</span>
         </button>
       </div>
+
+      <!-- 90-Minute Live Coding Timer (MGS Live Coding only) -->
+      <section
+        v-if="project.id === 'mgs-live-coding'"
+        aria-labelledby="mgs-timer-heading"
+        class="space-y-3 rounded-2xl border border-indigo-200 bg-white p-4 shadow-2xs sm:p-5 dark:border-indigo-900/70 dark:bg-slate-900"
+      >
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <AppIcon name="clock" :size="17" class="text-indigo-700 dark:text-indigo-400" />
+            <h2 id="mgs-timer-heading" class="text-sm font-bold text-slate-900 dark:text-slate-50">
+              {{ t('focus.timerTitle') }}
+            </h2>
+          </div>
+          <RouterLink
+            :to="{ path: '/practice', query: { type: 'bugspot' } }"
+            class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 dark:border-slate-700 dark:bg-slate-800 dark:text-indigo-300"
+          >
+            <AppIcon name="bug" :size="14" />
+            <span>{{ t('focus.timerPracticeBugs') }}</span>
+          </RouterLink>
+        </div>
+
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="preset in TIMER_PRESETS"
+            :key="preset.id"
+            type="button"
+            class="rounded-xl border px-3 text-xs font-semibold transition-colors"
+            :class="
+              timerPreset === preset.id
+                ? 'border-indigo-700 bg-indigo-50 text-indigo-800 dark:border-indigo-500 dark:bg-indigo-950/70 dark:text-indigo-200'
+                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300'
+            "
+            :aria-pressed="timerPreset === preset.id"
+            @click="selectTimerPreset(preset.id)"
+          >
+            {{ preset.label }}
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <p
+            data-testid="mgs-timer-display"
+            class="font-mono text-3xl font-bold tracking-tight"
+            :class="timerLeft === 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-50'"
+          >
+            {{ timerDisplay }}
+          </p>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-700 px-4 text-sm font-semibold text-white hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-500"
+              @click="toggleTimer"
+            >
+              <AppIcon :name="timerRunning ? 'clock' : 'play'" :size="15" />
+              <span>{{ timerRunning ? t('focus.timerPause') : t('focus.timerStart') }}</span>
+            </button>
+            <button
+              type="button"
+              class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 px-3.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              @click="resetTimer"
+            >
+              <AppIcon name="rotate-ccw" :size="15" />
+              <span>{{ t('focus.timerReset') }}</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" aria-hidden="true">
+          <div
+            class="h-full rounded-full bg-indigo-600 transition-all duration-300 dark:bg-indigo-400"
+            :style="{ width: `${timerProgressPct}%` }"
+          />
+        </div>
+        <p v-if="timerLeft === 0" role="status" class="text-xs font-semibold text-rose-700 dark:text-rose-300">
+          {{ t('focus.timerDone') }}
+        </p>
+      </section>
 
       <ul class="grid gap-3 sm:grid-cols-2">
         <li v-for="x in focusTopics" :key="x.id">

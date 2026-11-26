@@ -14,23 +14,30 @@ const route = useRoute();
 const { cards, store } = useStore();
 const interview = computed(() => route.query.mode === 'interview');
 
+const types: CardType[] = ['flashcard', 'mcq', 'output', 'bugspot'];
+const queryType = (): CardType[] =>
+  typeof route.query.type === 'string' && types.includes(route.query.type as CardType)
+    ? [route.query.type as CardType]
+    : [];
+
 const form = reactive({
   tracks: [] as Track[],
   levels: [] as Level[],
-  types: [] as CardType[],
+  types: queryType(),
   length: interview.value ? 20 : store.settings.quizLength,
   timer: interview.value ? true : store.settings.timer,
 });
-const types: CardType[] = ['flashcard', 'mcq', 'output', 'bugspot'];
 const session = ref<Card[] | null>(null);
 const runId = ref(0);
 
 watch(
-  () => route.query.mode,
+  () => [route.query.mode, route.query.type],
   () => {
     session.value = null;
     form.length = interview.value ? 20 : store.settings.quizLength;
     form.timer = interview.value ? true : store.settings.timer;
+    const qt = queryType();
+    if (qt.length) form.types = qt;
     if (interview.value) {
       form.types = form.types.filter((ty) => ty !== 'flashcard');
     }

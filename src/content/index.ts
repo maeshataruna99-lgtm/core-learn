@@ -15,6 +15,7 @@ import { cards as javaCore } from './java-spring/core.ts';
 import { cards as javaMore } from './java-spring/more.ts';
 import { cards as securityApi } from './security/api.ts';
 import { cards as securityCore } from './security/core.ts';
+import { cards as securityMgsReview } from './security/mgs-review.ts';
 import { cards as sqlIndexes } from './sql-db/indexes.ts';
 import { cards as sqlCore } from './sql-db/core.ts';
 import { cards as messagingBrokers } from './messaging/brokers.ts';
@@ -42,7 +43,7 @@ const authored: Card[] = [
   ...nestGuards, ...nestCore, ...nestAdvanced,
   ...vueReactivity, ...vueCore, ...vueAdvanced,
   ...javaBasics, ...javaCore, ...javaMore,
-  ...securityApi, ...securityCore,
+  ...securityApi, ...securityCore, ...securityMgsReview,
   ...sqlIndexes, ...sqlCore,
   ...messagingBrokers, ...messagingCore,
   ...sequence(tsFoundations),

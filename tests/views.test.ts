@@ -2,6 +2,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { flushPromises, mount } from '@vue/test-utils';
 import { createMemoryHistory, createRouter } from 'vue-router';
+import App from '../src/App.vue';
 import MyCvView from '../src/views/MyCvView.vue';
 import PracticeView from '../src/views/PracticeView.vue';
 import WikiView from '../src/views/WikiView.vue';
@@ -135,5 +136,69 @@ describe('Views regression tests (MyCv, Practice, Wiki, Focus)', () => {
     expect(router.currentRoute.value.name).toBe('not-found');
     expect(wrapper.text()).toContain('Page not found');
     expect(wrapper.find('a[href="/"]').exists()).toBe(true);
+  });
+
+  it('App navigation highlights MGS Live Coding separately from Focus and exposes it in mobile drawer', async () => {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/', component: { template: '<div>Home</div>' } },
+        { path: '/learn', component: { template: '<div>Learn</div>' } },
+        { path: '/practice', component: { template: '<div>Practice</div>' } },
+        { path: '/focus', component: FocusView },
+        { path: '/wiki', component: { template: '<div>Wiki</div>' } },
+        { path: '/lab', component: { template: '<div>Lab</div>' } },
+        { path: '/mycv', component: { template: '<div>MyCV</div>' } },
+        { path: '/progress', component: { template: '<div>Progress</div>' } },
+        { path: '/settings', component: { template: '<div>Settings</div>' } },
+      ],
+    });
+    await router.push('/focus?project=mgs-live-coding');
+    await router.isReady();
+
+    const wrapper = mount(App, { global: { plugins: [router] } });
+    await flushPromises();
+
+    const primaryLinks = wrapper.find('nav[aria-label="Primary"]').findAll('a');
+    const mgsLink = primaryLinks.find((a) => a.text().includes('MGS Live Coding'));
+    const focusLink = primaryLinks.find((a) => a.text().trim() === 'Focus');
+    expect(mgsLink?.attributes('aria-current')).toBe('page');
+    expect(focusLink?.attributes('aria-current')).toBeUndefined();
+
+    // Switching to another Focus project activates Focus, not MGS Live Coding
+    await router.push('/focus?project=ai-ops');
+    await flushPromises();
+    expect(mgsLink?.attributes('aria-current')).toBeUndefined();
+    expect(focusLink?.attributes('aria-current')).toBe('page');
+
+    // Open mobile drawer and confirm MGS shortcut is present
+    const moreBtn = wrapper.find('nav[aria-label="Mobile"] button');
+    await moreBtn.trigger('click');
+    await flushPromises();
+    const drawer = wrapper.find('#mobile-nav-drawer');
+    expect(drawer.exists()).toBe(true);
+    expect(drawer.text()).toContain('MGS Live Coding');
+  });
+
+  it('FocusView shows the 90-minute timer on MGS Live Coding and switches presets', async () => {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [
+        { path: '/focus', component: FocusView },
+        { path: '/practice', component: { template: '<div />' } },
+      ],
+    });
+    await router.push('/focus?project=mgs-live-coding');
+    await router.isReady();
+
+    const wrapper = mount(FocusView, { global: { plugins: [router] } });
+    await flushPromises();
+
+    expect(wrapper.find('[data-testid="mgs-timer-display"]').text()).toBe('90:00');
+
+    const part2Btn = wrapper.findAll('button').find((b) => b.text().includes('Part 2'));
+    expect(part2Btn).toBeDefined();
+    await part2Btn!.trigger('click');
+    expect(wrapper.find('[data-testid="mgs-timer-display"]').text()).toBe('40:00');
   });
 });

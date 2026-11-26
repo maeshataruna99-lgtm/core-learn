@@ -2,7 +2,8 @@ import { useStore } from '../composables/useStore.ts';
 
 // UI strings only. Card content and code stay in English.
 export const en = {
-  'nav.home': 'Home', 'nav.learn': 'Learn', 'nav.practice': 'Practice', 'nav.progress': 'Progress', 'nav.settings': 'Settings', 'nav.wiki': 'Wiki', 'nav.mycv': 'MyCV', 'nav.focus': 'Focus', 'nav.lab': 'Experimental Learn',
+  'nav.home': 'Home', 'nav.learn': 'Learn', 'nav.practice': 'Practice', 'nav.progress': 'Progress', 'nav.settings': 'Settings', 'nav.wiki': 'Wiki', 'nav.mycv': 'MyCV', 'nav.focus': 'Focus', 'nav.lab': 'Experimental Learn', 'nav.mgs': 'MGS Live Coding',
+  'nav.mgsSub': '90-min Backend simulation',
   'nav.group.study': 'Study', 'nav.group.reference': 'Interview & Reference', 'nav.group.system': 'System',
   'nav.more': 'More', 'nav.close': 'Close menu',
   'home.due': 'due today ({n} total)', 'home.streak': 'day streak', 'home.continue': 'Continue review',
@@ -127,13 +128,15 @@ export const en = {
   'focus.simProgress': 'Question {n} of {total}', 'focus.simDraft': 'Answer out loud or write it first (not saved)',
   'focus.simOk': 'I could answer this', 'focus.simWeak': 'Needs practice', 'focus.simScore': '{ok} of {total} answered well',
   'focus.simReview': 'Review these answers', 'focus.simRetryWeak': 'Practise these again', 'focus.simRestart': 'Restart the full simulation',
+  'focus.timerTitle': 'Live coding timer', 'focus.timerStart': 'Start', 'focus.timerPause': 'Pause', 'focus.timerReset': 'Reset', 'focus.timerDone': 'Time is up — move to the next part or final check.', 'focus.timerPracticeBugs': 'Drill Bug Hunt',
   'pwa.update': 'A new version is available.', 'pwa.reload': 'Reload', 'pwa.offline': 'Ready to work offline.',
 } as const;
 
 export type Key = keyof typeof en;
 
 export const id: Record<Key, string> = {
-  'nav.home': 'Beranda', 'nav.learn': 'Belajar', 'nav.practice': 'Latihan', 'nav.progress': 'Progres', 'nav.settings': 'Setelan', 'nav.wiki': 'Wiki', 'nav.mycv': 'MyCV', 'nav.focus': 'Fokus', 'nav.lab': 'Experimental Learn',
+  'nav.home': 'Beranda', 'nav.learn': 'Belajar', 'nav.practice': 'Latihan', 'nav.progress': 'Progres', 'nav.settings': 'Setelan', 'nav.wiki': 'Wiki', 'nav.mycv': 'MyCV', 'nav.focus': 'Fokus', 'nav.lab': 'Experimental Learn', 'nav.mgs': 'MGS Live Coding',
+  'nav.mgsSub': 'Simulasi Backend 90 menit',
   'nav.group.study': 'Belajar', 'nav.group.reference': 'Wawancara & Referensi', 'nav.group.system': 'Sistem',
   'nav.more': 'Lainnya', 'nav.close': 'Tutup menu',
   'home.due': 'jatuh tempo hari ini (total {n})', 'home.streak': 'hari beruntun', 'home.continue': 'Lanjutkan ulasan',
@@ -258,6 +261,7 @@ export const id: Record<Key, string> = {
   'focus.simProgress': 'Pertanyaan {n} dari {total}', 'focus.simDraft': 'Jawab dengan suara atau tulis dulu (tidak disimpan)',
   'focus.simOk': 'Saya bisa menjawab', 'focus.simWeak': 'Perlu latihan', 'focus.simScore': '{ok} dari {total} terjawab dengan baik',
   'focus.simReview': 'Pelajari lagi jawaban ini', 'focus.simRetryWeak': 'Latih lagi yang ini', 'focus.simRestart': 'Ulangi seluruh simulasi',
+  'focus.timerTitle': 'Timer live coding', 'focus.timerStart': 'Mulai', 'focus.timerPause': 'Jeda', 'focus.timerReset': 'Reset', 'focus.timerDone': 'Waktu habis — lanjut ke bagian berikutnya atau cek akhir.', 'focus.timerPracticeBugs': 'Latihan Cari Bug',
   'pwa.update': 'Versi baru tersedia.', 'pwa.reload': 'Muat ulang', 'pwa.offline': 'Siap digunakan secara offline.',
 };
 
