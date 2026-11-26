@@ -20,6 +20,21 @@ export const mgsTopics: FocusTopic[] = [
       { en: '25-65: REST API. Validation, service, store, router, error handler. Core endpoints before extras.', id: '25-65: REST API. Validation, service, store, router, error handler. Endpoint inti sebelum tambahan.' },
       { en: '65-90: review. Security first, then quality and performance. Write each finding as problem, impact, fix.', id: '65-90: review. Security dulu, lalu kualitas dan performa. Tulis tiap temuan sebagai masalah, dampak, perbaikan.' },
     ],
+    snippets: [
+      {
+        title: { en: 'Fast NestJS + Prisma commands (< 4 min)', id: 'Perintah cepat NestJS + Prisma (< 4 mnt)' },
+        language: 'bash',
+        code: `# Scaffold & deps (if no starter is provided)
+npx @nestjs/cli new api --package-manager npm
+cd api && npm i @prisma/client class-validator class-transformer
+npm i -D prisma && npx prisma init --datasource-provider sqlite
+
+# Migrate, seed & verify
+npx prisma migrate dev --name init
+npx prisma db seed
+npm test`,
+      },
+    ],
     code: [`${P}/README.md`],
     questions: [
       { q: { en: 'You are stuck on the algorithm at minute 20. What do you do?', id: 'Kamu buntu di algoritma pada menit 20. Apa yang dilakukan?' },
@@ -40,6 +55,31 @@ export const mgsTopics: FocusTopic[] = [
       { en: 'Summary: skip non-PAID and amount <= 0, sum per user in a Map, sort by total desc then userId asc. O(N + U log U).', id: 'Ringkasan: lewati non-PAID dan amount <= 0, jumlahkan per user di Map, sort total turun lalu userId naik. O(N + U log U).' },
       { en: 'Rate limiter: per-user timestamp list, drop entries before ts - window + 1, reject when length >= limit, record only allowed requests.', id: 'Rate limiter: daftar timestamp per user, buang entri sebelum ts - window + 1, tolak saat length >= limit, catat hanya request yang diizinkan.' },
       { en: 'Brackets: push openers, on a closer pop and compare, valid only if the stack ends empty. O(N).', id: 'Bracket: push pembuka, saat penutup pop lalu bandingkan, valid hanya jika stack kosong di akhir. O(N).' },
+    ],
+    snippets: [
+      {
+        title: { en: 'Pattern 1: HashMap aggregation + deterministic sort', id: 'Pola 1: Agregasi HashMap + sort deterministik' },
+        language: 'ts',
+        code: `const totals = new Map<string, number>();
+for (const tx of transactions) {
+  if (tx.status !== 'PAID' || tx.amount <= 0) continue;
+  totals.set(tx.userId, (totals.get(tx.userId) ?? 0) + tx.amount);
+}
+return [...totals.entries()]
+  .map(([userId, total]) => ({ userId, total }))
+  .sort((a, b) => (b.total !== a.total ? b.total - a.total : a.userId.localeCompare(b.userId)));`,
+      },
+      {
+        title: { en: 'Pattern 2: Sliding window rate limiter', id: 'Pola 2: Sliding window rate limiter' },
+        language: 'ts',
+        code: `const minValid = timestampSec - this.windowSec + 1;
+const logs = this.store.get(userId) ?? [];
+while (logs.length && logs[0]! < minValid) logs.shift();
+if (logs.length >= this.limit) return false; // never record rejected hits
+logs.push(timestampSec);
+this.store.set(userId, logs);
+return true;`,
+      },
     ],
     code: [`${P}/part1-algorithm.ts`, `${P}/part1-solutions.ts`],
     questions: [
@@ -70,6 +110,34 @@ export const mgsTopics: FocusTopic[] = [
       { en: 'PATCH /tickets/:id/status follows OPEN -> IN_PROGRESS -> DONE. The check and the write are one updateMany with the allowed current statuses in the where clause; zero rows changed means 404 or 409 (ConflictException).', id: 'PATCH /tickets/:id/status mengikuti OPEN -> IN_PROGRESS -> DONE. Pengecekan dan penulisan adalah satu updateMany dengan status saat ini yang diizinkan di klausa where; nol baris berubah berarti 404 atau 409 (ConflictException).' },
       { en: 'Routes live under /api/v1; /health stays at the root for probes and also checks the database.', id: 'Route ada di bawah /api/v1; /health tetap di root untuk probe dan ikut mengecek database.' },
       { en: 'A global PrismaExceptionFilter maps P2025 to 404, P2002 to 409, P2003 to 400, and hides database details.', id: 'PrismaExceptionFilter global memetakan P2025 ke 404, P2002 ke 409, P2003 ke 400, dan menyembunyikan detail database.' },
+    ],
+    snippets: [
+      {
+        title: { en: 'Global guardrails (prefix, validation, Prisma filter)', id: 'Guardrails global (prefix, validasi, filter Prisma)' },
+        language: 'ts',
+        code: `app.setGlobalPrefix('api/v1', { exclude: ['health'] });
+app.useGlobalFilters(new PrismaExceptionFilter());
+app.useGlobalPipes(
+  new ValidationPipe({
+    whitelist: true,            // strip unknown fields
+    forbidNonWhitelisted: true, // reject mass assignment with 400
+    transform: true,            // coerce query strings to numbers
+  }),
+);`,
+      },
+      {
+        title: { en: 'Atomic status update (no race condition)', id: 'Update status atomik (anti race condition)' },
+        language: 'ts',
+        code: `const { count } = await this.prisma.ticket.updateMany({
+  where: { id, status: { in: allowedFrom(next) } },
+  data: { status: next },
+});
+if (count === 0) {
+  const exists = await this.prisma.ticket.findUnique({ where: { id } });
+  if (!exists) throw new NotFoundException('Ticket not found');
+  throw new ConflictException(\`Cannot transition from \${exists.status} to \${next}\`);
+}`,
+      },
     ],
     code: [`${P}/api/src/tickets/tickets.service.ts`, `${P}/api/src/tickets/tickets.controller.ts`, `${P}/api/src/tickets/dto/create-ticket.dto.ts`, `${P}/api/src/configure-app.ts`, `${P}/api/test/tickets.spec.ts`],
     questions: [
@@ -108,6 +176,22 @@ export const mgsTopics: FocusTopic[] = [
       { en: 'prisma/seed.ts uses upsert on the unique email, and seeds tickets only when the table is empty.', id: 'prisma/seed.ts memakai upsert pada email yang unik, dan mengisi ticket hanya saat tabel kosong.' },
       { en: 'Tests run migrate deploy against a separate test.db, then clean tables before each test.', id: 'Test menjalankan migrate deploy ke test.db terpisah, lalu membersihkan tabel sebelum tiap test.' },
     ],
+    snippets: [
+      {
+        title: { en: 'Idempotent seed with upsert', id: 'Seed idempotent dengan upsert' },
+        language: 'ts',
+        code: `const alice = await prisma.user.upsert({
+  where: { email: 'alice@example.com' },
+  update: {},
+  create: { name: 'Alice', email: 'alice@example.com' },
+});
+if ((await prisma.ticket.count()) === 0) {
+  await prisma.ticket.createMany({
+    data: [{ title: 'Fix login rate limit', priority: 'HIGH', assigneeId: alice.id }],
+  });
+}`,
+      },
+    ],
     code: [`${P}/api/prisma/schema.prisma`, `${P}/api/prisma/seed.ts`, `${P}/api/src/tickets/tickets.service.ts`],
     questions: [
       { q: { en: 'migrate dev versus migrate deploy: when do you use each?', id: 'migrate dev versus migrate deploy: kapan memakai masing-masing?' },
@@ -139,6 +223,29 @@ export const mgsTopics: FocusTopic[] = [
       { en: 'Authorisation: check that the record belongs to the caller, unless the role allows more.', id: 'Otorisasi: cek record milik pemanggil, kecuali role mengizinkan lebih.' },
       { en: 'Mass assignment: allowlist the fields a user may change.', id: 'Mass assignment: allowlist field yang boleh diubah user.' },
       { en: 'Errors: log on the server, return a generic 500, never an empty catch that reports success.', id: 'Error: catat di server, kembalikan 500 generik, jangan empty catch yang melaporkan sukses.' },
+    ],
+    snippets: [
+      {
+        title: { en: 'Top 4 review fixes (SQLi, IDOR, N+1, Transaction)', id: '4 perbaikan review utama (SQLi, IDOR, N+1, Transaksi)' },
+        language: 'ts',
+        code: `// 1. SQLi: use tagged $queryRaw, never $queryRawUnsafe with user input
+await prisma.$queryRaw\`SELECT id, title FROM Ticket WHERE title LIKE \${\`%\${q}%\`} LIMIT 50\`;
+
+// 2. IDOR: check ownership or role before reading/mutating
+if (actor.role !== 'ADMIN' && ticket.assigneeId !== actor.id) throw new ForbiddenException();
+
+// 3. N+1 + secret leak: eager load with explicit select + pagination cap
+await prisma.ticket.findMany({
+  take: Math.min(limit, 50),
+  select: { id: true, title: true, assignee: { select: { id: true, name: true } } },
+});
+
+// 4. Multi-write integrity: wrap state change + audit log in $transaction
+await prisma.$transaction([
+  prisma.ticket.update({ where: { id }, data: { status: 'DONE' } }),
+  prisma.auditLog.create({ data: { ticketId: id, actorId: actor.id, action: 'CLOSE' } }),
+]);`,
+      },
     ],
     code: [`${P}/part3-code-review.ts`, `${P}/part3-code-review-fixed.ts`, `${P}/part3-prisma-review.ts`, `${P}/part3-prisma-review-fixed.ts`],
     questions: [

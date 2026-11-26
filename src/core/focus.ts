@@ -1,6 +1,12 @@
 import type { CvQuestion } from './mycv.ts';
 import type { Bi } from './wiki.ts';
 
+export interface FocusSnippet {
+  title: Bi;
+  language: string;
+  code: string;
+}
+
 /** One part of the project in focus, with what is needed to explain and defend it in an interview. */
 export interface FocusTopic {
   id: string;
@@ -13,6 +19,8 @@ export interface FocusTopic {
   tellIt: Bi;
   /** The steps this part runs through, in order. */
   flow?: Bi[];
+  /** Optional inline code snippets / cheat sheets rendered directly inside the topic. */
+  snippets?: FocusSnippet[];
   /** Repo-relative paths that show it in the project's code. */
   code: string[];
   /** Asked in this order during the interview simulation. */
@@ -62,6 +70,10 @@ export function validateTopics(topics: FocusTopic[]): string[] {
     bi(t.id, 'tellIt', t.tellIt);
     if (t.why) bi(t.id, 'why', t.why);
     t.flow?.forEach((step, i) => bi(t.id, `flow[${i}]`, step));
+    t.snippets?.forEach((s, i) => {
+      bi(t.id, `snippets[${i}].title`, s.title);
+      if (!s.language?.trim() || !s.code?.trim()) errors.push(`${t.id}: snippets[${i}] needs language and code`);
+    });
     if (!t.questions?.length) errors.push(`${t.id}: needs at least one question`);
     t.questions?.forEach((q, i) => {
       bi(t.id, `questions[${i}].q`, q.q);

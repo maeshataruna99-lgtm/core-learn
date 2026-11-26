@@ -6,6 +6,7 @@ export interface PracticeFilter {
   tracks?: Track[];
   levels?: Level[];
   types?: CardType[];
+  tag?: string;
 }
 
 export function filterCards(cards: Card[], f: PracticeFilter): Card[] {
@@ -13,7 +14,8 @@ export function filterCards(cards: Card[], f: PracticeFilter): Card[] {
     (c) =>
       (!f.tracks?.length || f.tracks.includes(c.track)) &&
       (!f.levels?.length || f.levels.includes(c.level)) &&
-      (!f.types?.length || f.types.includes(c.type)),
+      (!f.types?.length || f.types.includes(c.type)) &&
+      (!f.tag || c.tags.includes(f.tag)),
   );
 }
 

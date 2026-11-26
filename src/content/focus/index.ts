@@ -203,6 +203,14 @@ export const focusTopics: FocusTopic[] = [
 
 export const focusProjects: FocusProject[] = [
   {
+    id: 'mgs-live-coding',
+    title: { en: 'MGS Live Coding', id: 'MGS Live Coding' },
+    intro: { en: 'Simulation for the PT Mega Giga Solusindo Backend Developer technical test: a 90-minute plan, algorithm patterns, a clean REST API and a code review checklist. Practice files live in the practice-mgs folder.',
+      id: 'Simulasi technical test Backend Developer PT Mega Giga Solusindo: rencana 90 menit, pola algoritma, REST API yang bersih, dan checklist code review. File latihan ada di folder practice-mgs.' },
+    repo: 'https://github.com/maeshataruna99-lgtm/core-learn',
+    topics: mgsTopics,
+  },
+  {
     id: 'ai-ops',
     title: { en: 'AI automation', id: 'AI automation' },
     intro: { en: 'My AI Operations Assistant project, part by part: what it is, how to tell it, the code behind it and the interview questions it invites.',
@@ -241,13 +249,5 @@ export const focusProjects: FocusProject[] = [
       id: 'Proyek Sistem Informasi Rumah Sakit Rawat Jalan-ku (Yii2 PHP 8.3, Node.js Express 5, React 19, PostgreSQL 16), bagian demi bagian: batas single-writer, RBAC, penguncian konkurensi, retry outbox, performa SQL, dan tanya jawab wawancara.' },
     repo: 'https://github.com/maeshataruna99-lgtm/simrs-rawat-jalan',
     topics: simrsTopics,
-  },
-  {
-    id: 'mgs-live-coding',
-    title: { en: 'MGS Live Coding', id: 'MGS Live Coding' },
-    intro: { en: 'Simulation for the PT Mega Giga Solusindo Backend Developer technical test: a 90-minute plan, algorithm patterns, a clean REST API and a code review checklist. Practice files live in the practice-mgs folder.',
-      id: 'Simulasi technical test Backend Developer PT Mega Giga Solusindo: rencana 90 menit, pola algoritma, REST API yang bersih, dan checklist code review. File latihan ada di folder practice-mgs.' },
-    repo: 'https://github.com/maeshataruna99-lgtm/core-learn',
-    topics: mgsTopics,
   },
 ];

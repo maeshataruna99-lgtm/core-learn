@@ -14,7 +14,13 @@ const masteredCount = computed(() => cards.filter((c) => (store.progress[c.id]?.
 const wikiDoneCount = computed(() => wikiEntries.filter((e) => store.understood[e.id]).length);
 const summaries = computed(() => trackSummaries(cards, store.progress, nowIso.value));
 
-const tiles: { to: { name: string; query?: Record<string, string> }; title: 'home.learn' | 'home.revise' | 'home.interview'; text: 'home.learnText' | 'home.reviseText' | 'home.interviewText'; icon: IconName }[] = [
+const tiles: {
+  to: { name: string; query?: Record<string, string> };
+  title: 'home.learn' | 'home.revise' | 'home.interview' | 'home.mgs';
+  text: 'home.learnText' | 'home.reviseText' | 'home.interviewText' | 'home.mgsText';
+  icon: IconName;
+}[] = [
+  { to: { name: 'focus', query: { project: 'mgs-live-coding' } }, title: 'home.mgs', text: 'home.mgsText', icon: 'terminal' },
   { to: { name: 'learn' }, title: 'home.learn', text: 'home.learnText', icon: 'book-open' },
   { to: { name: 'practice', query: { mode: 'revise' } }, title: 'home.revise', text: 'home.reviseText', icon: 'rotate-ccw' },
   { to: { name: 'practice', query: { mode: 'interview' } }, title: 'home.interview', text: 'home.interviewText', icon: 'clock' },
@@ -84,7 +90,7 @@ const tiles: { to: { name: string; query?: Record<string, string> }; title: 'hom
       <h2 id="home-modes" class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
         {{ t('home.quickLaunch') }}
       </h2>
-      <div class="grid gap-3 sm:grid-cols-3">
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <RouterLink
           v-for="tile in tiles"
           :key="tile.title"

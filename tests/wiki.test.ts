@@ -99,7 +99,7 @@ describe('focus data', () => {
     expect(focusQuestions(focusTopics).length).toBe(focusTopics.reduce((n, t) => n + t.questions.length, 0));
   });
   it('builds one concept card per topic plus its questions', () => {
-    const topics = focusProjects[1]!.topics;
+    const topics = focusProjects.find((p) => p.id === 'split-bill')!.topics;
     const cards = focusCards(topics);
     expect(cards.length).toBe(topics.length + focusQuestions(topics).length);
     expect(cards[0]).toMatchObject({ kind: 'concept', front: topics[0]!.title });

@@ -20,10 +20,13 @@ const queryType = (): CardType[] =>
     ? [route.query.type as CardType]
     : [];
 
+const queryTag = (): string => (typeof route.query.tag === 'string' ? route.query.tag.trim() : '');
+
 const form = reactive({
   tracks: [] as Track[],
   levels: [] as Level[],
   types: queryType(),
+  tag: queryTag(),
   length: interview.value ? 20 : store.settings.quizLength,
   timer: interview.value ? true : store.settings.timer,
 });
@@ -31,13 +34,14 @@ const session = ref<Card[] | null>(null);
 const runId = ref(0);
 
 watch(
-  () => [route.query.mode, route.query.type],
+  () => [route.query.mode, route.query.type, route.query.tag],
   () => {
     session.value = null;
     form.length = interview.value ? 20 : store.settings.quizLength;
     form.timer = interview.value ? true : store.settings.timer;
     const qt = queryType();
     if (qt.length) form.types = qt;
+    form.tag = queryTag();
     if (interview.value) {
       form.types = form.types.filter((ty) => ty !== 'flashcard');
     }
@@ -59,6 +63,7 @@ function toggleItem<T>(arr: T[], val: T) {
 function applyPreset(preset: 'quick' | 'bugs' | 'output' | 'interview') {
   form.tracks = [];
   form.levels = [];
+  form.tag = '';
   if (preset === 'quick') {
     form.types = [];
     form.length = 10;
@@ -82,6 +87,7 @@ function clearFilters() {
   form.tracks = [];
   form.levels = [];
   form.types = [];
+  form.tag = '';
 }
 
 function start() {
@@ -114,12 +120,22 @@ function start() {
             {{ t('practice.presets') }}
           </p>
           <button
-            v-if="form.tracks.length || form.levels.length || form.types.length"
+            v-if="form.tracks.length || form.levels.length || form.types.length || form.tag"
             type="button"
             class="text-xs font-semibold text-indigo-700 hover:underline dark:text-indigo-300"
             @click="clearFilters"
           >
             {{ t('practice.clearAll') }}
+          </button>
+        </div>
+        <div v-if="form.tag" class="flex items-center gap-2">
+          <button
+            type="button"
+            class="inline-flex items-center gap-1.5 rounded-xl border border-indigo-300 bg-indigo-50 px-3 font-mono text-xs font-semibold text-indigo-800 hover:bg-indigo-100 dark:border-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-200"
+            @click="form.tag = ''"
+          >
+            <span>#{{ form.tag }}</span>
+            <AppIcon name="x" :size="13" />
           </button>
         </div>
         <div class="flex flex-wrap gap-2">

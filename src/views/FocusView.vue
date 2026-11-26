@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import AppIcon from '../components/AppIcon.vue';
+import CodeBlock from '../components/CodeBlock.vue';
 import FormattedText from '../components/FormattedText.vue';
 import SwipeDeck from '../components/SwipeDeck.vue';
+import { useMgsTimer } from '../composables/useMgsTimer.ts';
 import { useStore } from '../composables/useStore.ts';
 import { focusProjects } from '../content/focus/index.ts';
 import { focusCards, focusKey, focusQuestions } from '../core/focus.ts';
@@ -81,69 +83,7 @@ function rate(ok: boolean) {
   draft.value = '';
 }
 
-// 90-minute live coding timer (shown on the MGS Live Coding project).
-const TIMER_PRESETS = [
-  { id: 'full', label: '90m', seconds: 90 * 60 },
-  { id: 'part1', label: 'Part 1 · 25m', seconds: 25 * 60 },
-  { id: 'part2', label: 'Part 2 · 40m', seconds: 40 * 60 },
-  { id: 'part3', label: 'Part 3 · 25m', seconds: 25 * 60 },
-] as const;
-
-const timerPreset = ref<(typeof TIMER_PRESETS)[number]['id']>('full');
-const timerTotal = ref<number>(90 * 60);
-const timerLeft = ref<number>(90 * 60);
-const timerRunning = ref(false);
-let timerHandle: ReturnType<typeof setInterval> | null = null;
-
-function stopTimer() {
-  if (timerHandle !== null) {
-    clearInterval(timerHandle);
-    timerHandle = null;
-  }
-  timerRunning.value = false;
-}
-
-function selectTimerPreset(id: (typeof TIMER_PRESETS)[number]['id']) {
-  const found = TIMER_PRESETS.find((p) => p.id === id) ?? TIMER_PRESETS[0];
-  stopTimer();
-  timerPreset.value = found.id;
-  timerTotal.value = found.seconds;
-  timerLeft.value = found.seconds;
-}
-
-function toggleTimer() {
-  if (timerRunning.value) {
-    stopTimer();
-    return;
-  }
-  if (timerLeft.value <= 0) timerLeft.value = timerTotal.value;
-  timerRunning.value = true;
-  timerHandle = setInterval(() => {
-    if (timerLeft.value <= 1) {
-      timerLeft.value = 0;
-      stopTimer();
-    } else {
-      timerLeft.value--;
-    }
-  }, 1000);
-}
-
-function resetTimer() {
-  stopTimer();
-  timerLeft.value = timerTotal.value;
-}
-
-const timerDisplay = computed(() => {
-  const mins = Math.floor(timerLeft.value / 60);
-  const secs = timerLeft.value % 60;
-  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-});
-
-const timerProgressPct = computed(() =>
-  timerTotal.value > 0 ? Math.round(((timerTotal.value - timerLeft.value) / timerTotal.value) * 100) : 0,
-);
-
-onBeforeUnmount(stopTimer);
+const timer = useMgsTimer();
 </script>
 
 <template>
@@ -261,13 +201,32 @@ onBeforeUnmount(stopTimer);
       class="mx-auto max-w-3xl space-y-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs sm:p-7 dark:border-slate-800 dark:bg-slate-900"
       :aria-labelledby="`f-${topic.id}`"
     >
-      <RouterLink
-        :to="{ path: '/focus', query: { project: project.id } }"
-        class="inline-flex items-center gap-1.5 rounded-xl px-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-950/60"
-      >
-        <AppIcon name="chevron-left" :size="16" />
-        <span>{{ t('focus.back') }}</span>
-      </RouterLink>
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <RouterLink
+          :to="{ path: '/focus', query: { project: project.id } }"
+          class="inline-flex items-center gap-1.5 rounded-xl px-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-50 dark:text-indigo-300 dark:hover:bg-indigo-950/60"
+        >
+          <AppIcon name="chevron-left" :size="16" />
+          <span>{{ t('focus.back') }}</span>
+        </RouterLink>
+
+        <!-- Compact persistent timer inside MGS topics -->
+        <div
+          v-if="project.id === 'mgs-live-coding'"
+          data-testid="mgs-topic-timer"
+          class="inline-flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50/70 px-3 py-1 dark:border-indigo-900 dark:bg-indigo-950/50"
+        >
+          <AppIcon name="clock" :size="14" class="text-indigo-700 dark:text-indigo-300" />
+          <span class="font-mono text-sm font-bold text-slate-900 dark:text-slate-50">{{ timer.display.value }}</span>
+          <button
+            type="button"
+            class="rounded-lg bg-indigo-700 px-2.5 text-xs font-semibold text-white hover:bg-indigo-800 dark:bg-indigo-600"
+            @click="timer.toggle"
+          >
+            {{ timer.running.value ? t('focus.timerPause') : t('focus.timerStart') }}
+          </button>
+        </div>
+      </div>
 
       <h1 :id="`f-${topic.id}`" class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-50">
         {{ topic.title[lang] }}
@@ -316,6 +275,16 @@ onBeforeUnmount(stopTimer);
             </div>
           </li>
         </ol>
+      </section>
+
+      <section v-if="topic.snippets?.length" aria-labelledby="f-snippets" class="space-y-3">
+        <h2 id="f-snippets" class="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          {{ t('focus.snippets') }}
+        </h2>
+        <div v-for="(s, i) in topic.snippets" :key="i" class="space-y-1.5">
+          <p class="text-sm font-semibold text-slate-800 dark:text-slate-200">{{ s.title[lang] }}</p>
+          <CodeBlock :code="s.code" :language="s.language" />
+        </div>
       </section>
 
       <section v-if="topic.code.length" aria-labelledby="f-code" class="space-y-2">
@@ -458,7 +427,7 @@ onBeforeUnmount(stopTimer);
             </h2>
           </div>
           <RouterLink
-            :to="{ path: '/practice', query: { type: 'bugspot' } }"
+            :to="{ path: '/practice', query: { type: 'bugspot', tag: 'mgs-live-coding' } }"
             class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 text-xs font-semibold text-indigo-700 hover:bg-indigo-50 dark:border-slate-700 dark:bg-slate-800 dark:text-indigo-300"
           >
             <AppIcon name="bug" :size="14" />
@@ -468,19 +437,19 @@ onBeforeUnmount(stopTimer);
 
         <div class="flex flex-wrap gap-1.5">
           <button
-            v-for="preset in TIMER_PRESETS"
-            :key="preset.id"
+            v-for="p in timer.presets"
+            :key="p.id"
             type="button"
             class="rounded-xl border px-3 text-xs font-semibold transition-colors"
             :class="
-              timerPreset === preset.id
+              timer.preset.value === p.id
                 ? 'border-indigo-700 bg-indigo-50 text-indigo-800 dark:border-indigo-500 dark:bg-indigo-950/70 dark:text-indigo-200'
                 : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300'
             "
-            :aria-pressed="timerPreset === preset.id"
-            @click="selectTimerPreset(preset.id)"
+            :aria-pressed="timer.preset.value === p.id"
+            @click="timer.selectPreset(p.id)"
           >
-            {{ preset.label }}
+            {{ p.label }}
           </button>
         </div>
 
@@ -488,23 +457,23 @@ onBeforeUnmount(stopTimer);
           <p
             data-testid="mgs-timer-display"
             class="font-mono text-3xl font-bold tracking-tight"
-            :class="timerLeft === 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-50'"
+            :class="timer.left.value === 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-slate-50'"
           >
-            {{ timerDisplay }}
+            {{ timer.display.value }}
           </p>
           <div class="flex items-center gap-2">
             <button
               type="button"
               class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-700 px-4 text-sm font-semibold text-white hover:bg-indigo-800 dark:bg-indigo-600 dark:hover:bg-indigo-500"
-              @click="toggleTimer"
+              @click="timer.toggle"
             >
-              <AppIcon :name="timerRunning ? 'clock' : 'play'" :size="15" />
-              <span>{{ timerRunning ? t('focus.timerPause') : t('focus.timerStart') }}</span>
+              <AppIcon :name="timer.running.value ? 'clock' : 'play'" :size="15" />
+              <span>{{ timer.running.value ? t('focus.timerPause') : t('focus.timerStart') }}</span>
             </button>
             <button
               type="button"
               class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 px-3.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
-              @click="resetTimer"
+              @click="timer.reset"
             >
               <AppIcon name="rotate-ccw" :size="15" />
               <span>{{ t('focus.timerReset') }}</span>
@@ -515,10 +484,10 @@ onBeforeUnmount(stopTimer);
         <div class="h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800" aria-hidden="true">
           <div
             class="h-full rounded-full bg-indigo-600 transition-all duration-300 dark:bg-indigo-400"
-            :style="{ width: `${timerProgressPct}%` }"
+            :style="{ width: `${timer.progressPct.value}%` }"
           />
         </div>
-        <p v-if="timerLeft === 0" role="status" class="text-xs font-semibold text-rose-700 dark:text-rose-300">
+        <p v-if="timer.left.value === 0" role="status" class="text-xs font-semibold text-rose-700 dark:text-rose-300">
           {{ t('focus.timerDone') }}
         </p>
       </section>

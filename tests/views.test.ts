@@ -96,7 +96,10 @@ describe('Views regression tests (MyCv, Practice, Wiki, Focus)', () => {
   it('D-09: FocusView clears expanded answers when navigating between topics', async () => {
     const router = createRouter({
       history: createMemoryHistory(),
-      routes: [{ path: '/focus', component: FocusView }],
+      routes: [
+        { path: '/focus', component: FocusView },
+        { path: '/practice', component: { template: '<div />' } },
+      ],
     });
     await router.push('/focus');
     await router.isReady();
@@ -180,12 +183,12 @@ describe('Views regression tests (MyCv, Practice, Wiki, Focus)', () => {
     expect(drawer.text()).toContain('MGS Live Coding');
   });
 
-  it('FocusView shows the 90-minute timer on MGS Live Coding and switches presets', async () => {
+  it('FocusView shows the 90-minute timer on MGS Live Coding, keeps state inside topics, and renders inline snippets', async () => {
     const router = createRouter({
       history: createMemoryHistory(),
       routes: [
         { path: '/focus', component: FocusView },
-        { path: '/practice', component: { template: '<div />' } },
+        { path: '/practice', component: PracticeView },
       ],
     });
     await router.push('/focus?project=mgs-live-coding');
@@ -200,5 +203,26 @@ describe('Views regression tests (MyCv, Practice, Wiki, Focus)', () => {
     expect(part2Btn).toBeDefined();
     await part2Btn!.trigger('click');
     expect(wrapper.find('[data-testid="mgs-timer-display"]').text()).toBe('40:00');
+
+    // Navigating into an MGS topic preserves the selected 40:00 timer and renders inline code snippets
+    await router.push('/focus?item=mgs-algo');
+    await flushPromises();
+    expect(wrapper.find('[data-testid="mgs-topic-timer"]').text()).toContain('40:00');
+    expect(wrapper.text()).toContain('Cheat sheet & code');
+  });
+
+  it('PracticeView filters strictly to MGS BugSpot cards via ?type=bugspot&tag=mgs-live-coding', async () => {
+    const router = createRouter({
+      history: createMemoryHistory(),
+      routes: [{ path: '/practice', component: PracticeView }],
+    });
+    await router.push('/practice?type=bugspot&tag=mgs-live-coding');
+    await router.isReady();
+
+    const wrapper = mount(PracticeView, { global: { plugins: [router] } });
+    await flushPromises();
+
+    expect(wrapper.text()).toContain('#mgs-live-coding');
+    expect(wrapper.text()).toContain('5 matching cards');
   });
 });
