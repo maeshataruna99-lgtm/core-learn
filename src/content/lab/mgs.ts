@@ -342,8 +342,8 @@ const parts: LabPart[] = [
   },
   {
     id: 'reviewSummary',
-    title: { en: 'Part 3: 17 tests', id: 'Part 3: 17 test' },
-    what: { en: 'All review proofs pass: SQL injection, secret, IDOR, mass assignment, N+1, transaction and empty catch.', id: 'Semua bukti review lulus: SQL injection, secret, IDOR, mass assignment, N+1, transaksi, dan empty catch.' },
+    title: { en: 'Part 3: 23 tests', id: 'Part 3: 23 test' },
+    what: { en: 'All review proofs pass: SQL injection, secret, IDOR, mass assignment, N+1, transaction, empty catch, leaked stack trace and magic numbers.', id: 'Semua bukti review lulus: SQL injection, secret, IDOR, mass assignment, N+1, transaksi, empty catch, stack trace bocor, dan magic number.' },
     why: { en: 'The written findings in docs/review-findings.md point at these test names, so every claim can be checked.', id: 'Temuan tertulis di docs/review-findings.md merujuk ke nama test ini, jadi setiap klaim bisa dicek.' },
     component: 'jest --selectProjects review',
     focus: 'mgs-review',
@@ -361,7 +361,7 @@ const parts: LabPart[] = [
   {
     id: 'allSuites',
     title: { en: 'npm test: every suite green', id: 'npm test: semua suite hijau' },
-    what: { en: 'Part 1 (16), the case checks (9) and both Jest projects (73 across 7 suites) pass in one command.', id: 'Part 1 (16), cek kasus (9), dan kedua project Jest (73 di 7 suite) lulus dalam satu perintah.' },
+    what: { en: 'Part 1 (16), the case checks (11) and both Jest projects (79 across 7 suites) pass in one command.', id: 'Part 1 (16), cek kasus (11), dan kedua project Jest (79 di 7 suite) lulus dalam satu perintah.' },
     why: { en: 'One command a reviewer can run without a .env or a server: tests use their own databases.', id: 'Satu perintah yang bisa dijalankan reviewer tanpa .env atau server: test memakai database sendiri.' },
     component: 'npm test',
     files: [{ path: 'jest.config.js', role: { en: 'Two Jest projects: api and review.', id: 'Dua project Jest: api dan review.' } }],

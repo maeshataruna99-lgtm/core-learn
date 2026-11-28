@@ -249,25 +249,25 @@ export const mgsShots = {
   },
   "review-tests": {
     "width": 1440,
-    "height": 741,
+    "height": 903,
     "boxes": {
       "provedPairs": {
         "x": 1.53,
-        "y": 16.06,
+        "y": 13.18,
         "w": 96.94,
-        "h": 9.3
+        "h": 7.63
       },
       "rollbackProof": {
         "x": 1.53,
-        "y": 65.37,
+        "y": 53.64,
         "w": 96.94,
-        "h": 14.78
+        "h": 12.12
       },
       "reviewSummary": {
         "x": 1.53,
-        "y": 84.54,
+        "y": 87.35,
         "w": 96.94,
-        "h": 3.82
+        "h": 3.13
       }
     }
   },
