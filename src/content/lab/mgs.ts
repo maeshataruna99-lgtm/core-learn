@@ -127,10 +127,13 @@ const parts: LabPart[] = [
     id: 'migrateDeploy',
     title: { en: 'migrate deploy applies the committed migration', id: 'migrate deploy menerapkan migrasi yang di-commit' },
     what: { en: '`npm run db:setup` runs `prisma migrate deploy` then `prisma db seed` against a fresh SQLite file.', id: '`npm run db:setup` menjalankan `prisma migrate deploy` lalu `prisma db seed` ke file SQLite baru.' },
-    why: { en: '`migrate deploy` only applies migrations that exist and never resets, so it is the one for CI, tests and production. `migrate dev` is only for creating a new migration.', id: '`migrate deploy` hanya menerapkan migrasi yang sudah ada dan tidak pernah mereset, jadi itu yang dipakai untuk CI, test, dan produksi. `migrate dev` hanya untuk membuat migrasi baru.' },
+    why: { en: '`migrate deploy` only applies migrations that exist and never resets, so it is the one for CI, tests and production. `migrate dev` is only for creating a new migration. The line "Prisma config detected, skipping environment variable loading" is expected: `prisma.config.ts` loads `.env` itself.', id: '`migrate deploy` hanya menerapkan migrasi yang sudah ada dan tidak pernah mereset, jadi itu yang dipakai untuk CI, test, dan produksi. `migrate dev` hanya untuk membuat migrasi baru. Baris "Prisma config detected, skipping environment variable loading" memang wajar: `prisma.config.ts` memuat `.env` sendiri.' },
     component: 'npm run db:setup',
     focus: 'mgs-prisma',
-    files: [{ path: 'part2-api/prisma/migrations', role: { en: 'The committed `init` migration.', id: 'Migrasi `init` yang di-commit.' } }],
+    files: [
+      { path: 'part2-api/prisma/migrations', role: { en: 'The committed `init` migration.', id: 'Migrasi `init` yang di-commit.' } },
+      { path: 'prisma.config.ts', role: { en: 'Schema path, seed command, and .env loading.', id: 'Path schema, perintah seed, dan pemuatan .env.' } },
+    ],
   },
   {
     id: 'seedIdempotent',
