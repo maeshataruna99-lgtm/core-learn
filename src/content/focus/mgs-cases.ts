@@ -336,4 +336,91 @@ if (!canAccess(actor, ticket)) return { status: 403, body: { message: 'Forbidden
           id: '403 lebih jelas tetapi membuka bahwa record itu ada; 404 menyembunyikannya. Pilih satu aturan dan terapkan di mana-mana. Query yang dibatasi pemilik (where: { id, assigneeId: actor.id }) adalah cara lain menjaga cek di satu tempat.' } },
     ],
   },
+  {
+    id: 'mgs-case-stack-trace-leak',
+    title: { en: 'Case 09: Stack trace and database error sent to the client', id: 'Kasus 09: Stack trace dan error database dikirim ke klien' },
+    what: {
+      en: 'A client assigns a ticket to a user id that does not exist and gets a 500 with the raw Prisma message ("Foreign key constraint violated...") and a stack trace full of server file paths. The handler catches every error and returns { error: String(err), stack: err.stack }.',
+      id: 'Klien meng-assign ticket ke id user yang tidak ada dan mendapat 500 berisi pesan Prisma mentah ("Foreign key constraint violated...") dan stack trace penuh path file server. Handler menangkap semua error dan mengembalikan { error: String(err), stack: err.stack }.',
+    },
+    why: {
+      en: 'The stack and the database text map the system for an attacker: tables, constraints, library versions and folders. Splitting known client errors (400) from unexpected ones (logged, generic 500) keeps the response useful and the detail on the server.',
+      id: 'Stack dan teks database memetakan sistem bagi penyerang: tabel, constraint, versi library, dan folder. Memisahkan error klien yang dikenal (400) dari yang tidak terduga (dicatat, 500 generik) membuat respons tetap berguna dan detailnya tetap di server.',
+    },
+    tellIt: {
+      en: 'In the fixed assignTicket, Prisma P2003 becomes 400 "Assignee does not exist", and anything else is logged with ticketId, actorId and the error, then answered with a generic 500. The test shows the vulnerable body contains "Foreign key constraint" and a ticket-service.ts stack frame; the fixed one returns only the generic message, and a forced SQLITE_BUSY error reaches the logger, not the client. Part 2 does the same for every endpoint with its global filters.',
+      id: 'Di assignTicket versi fixed, Prisma P2003 menjadi 400 "Assignee does not exist", dan error lain dicatat bersama ticketId, actorId, dan error-nya, lalu dijawab 500 generik. Test menunjukkan body versi rentan memuat "Foreign key constraint" dan frame stack ticket-service.ts; versi fixed hanya mengembalikan pesan generik, dan error SQLITE_BUSY yang dipaksa sampai ke logger, bukan ke klien. Part 2 melakukan hal yang sama untuk semua endpoint lewat filter global.',
+    },
+    flow: [
+      { en: 'Check 404 and ownership (403) before writing.', id: 'Cek 404 dan kepemilikan (403) sebelum menulis.' },
+      { en: 'catch: P2003 (foreign key) is the caller\'s mistake, so 400 with a generic message.', id: 'catch: P2003 (foreign key) adalah kesalahan pemanggil, jadi 400 dengan pesan generik.' },
+      { en: 'Anything else: console.error with context, then 500 "Internal server error".', id: 'Selain itu: console.error dengan konteks, lalu 500 "Internal server error".' },
+    ],
+    snippets: [
+      {
+        title: { en: 'Vulnerable vs fixed catch', id: 'catch rentan vs fixed' },
+        language: 'ts',
+        code: `// vulnerable
+} catch (err) {
+  return { status: 500, body: { error: String(err), stack: (err as Error).stack } };
+}
+
+// fixed
+} catch (err) {
+  if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2003') {
+    return { status: 400, body: { message: 'Assignee does not exist' } };
+  }
+  console.error('assignTicket failed', { ticketId: id, actorId: actor.id, err });
+  return { status: 500, body: { message: 'Internal server error' } };
+}`,
+      },
+    ],
+    code: ['docs/cases/09-stack-trace-leak.md', 'part3-review/vulnerable/ticket-service.ts', 'part3-review/fixed/ticket-service.ts', 'part3-review/test/review.spec.ts'],
+    questions: [
+      { q: { en: 'Why is returning err.stack dangerous even when the message looks harmless?', id: 'Kenapa mengembalikan err.stack berbahaya walau pesannya terlihat tidak berbahaya?' },
+        a: { en: 'The stack lists file paths, module names and library versions. That tells an attacker how the server is built and which known vulnerabilities to try. Log it, never send it.',
+          id: 'Stack mendaftar path file, nama modul, dan versi library. Itu memberi tahu penyerang bagaimana server dibangun dan celah mana yang bisa dicoba. Catat di log, jangan pernah dikirim.' } },
+      { q: { en: 'Generic messages make client debugging harder. How do you keep it traceable?', id: 'Pesan generik menyulitkan debugging di klien. Bagaimana menjaga agar tetap bisa dilacak?' },
+        a: { en: 'Return a request id in the response and write the same id in the server log next to the full error. Support can find the detail without the client ever seeing it.',
+          id: 'Kembalikan request id di respons dan tulis id yang sama di log server di samping error lengkapnya. Tim support bisa menemukan detailnya tanpa klien pernah melihatnya.' } },
+    ],
+  },
+  {
+    id: 'mgs-case-magic-numbers',
+    title: { en: 'Case 10: Magic numbers hiding a bug', id: 'Kasus 10: Magic number menyembunyikan bug' },
+    what: {
+      en: 'Low-priority tickets breach their response target a few hours after creation, although the policy says 72 hours. The code adds raw milliseconds: 14400000, 86400000 and 25920000. The last one is 7.2 hours, one zero short of 259200000.',
+      id: 'Ticket prioritas rendah melewati target respons beberapa jam setelah dibuat, padahal kebijakannya 72 jam. Kodenya menambahkan milidetik mentah: 14400000, 86400000, dan 25920000. Yang terakhir adalah 7,2 jam, kurang satu nol dari 259200000.',
+    },
+    why: {
+      en: 'A reviewer cannot check a number they cannot read. Naming the unit (HOUR_MS) and the policy (SLA_HOURS) makes the code read like the requirement, so a wrong value stands out.',
+      id: 'Reviewer tidak bisa mengecek angka yang tidak bisa dibaca. Memberi nama unit (HOUR_MS) dan kebijakan (SLA_HOURS) membuat kode terbaca seperti requirement-nya, sehingga nilai yang salah langsung terlihat.',
+    },
+    tellIt: {
+      en: 'The fixed slaDueAt is one line: createdAt plus SLA_HOURS[priority] times HOUR_MS, with SLA_HOURS = { HIGH: 4, MEDIUM: 24, LOW: 72 } typed as a Record over every priority. The test measures hours between createdAt and the due date: the vulnerable LOW target is exactly 7.2, the fixed ones are 4, 24 and 72.',
+      id: 'slaDueAt versi fixed hanya satu baris: createdAt ditambah SLA_HOURS[priority] dikali HOUR_MS, dengan SLA_HOURS = { HIGH: 4, MEDIUM: 24, LOW: 72 } bertipe Record untuk setiap priority. Test mengukur jam antara createdAt dan due date: target LOW versi rentan tepat 7,2, versi fixed 4, 24, dan 72.',
+    },
+    snippets: [
+      {
+        title: { en: 'Raw milliseconds vs named policy', id: 'Milidetik mentah vs kebijakan bernama' },
+        language: 'ts',
+        code: `// vulnerable: which one is wrong?
+return new Date(createdAt.getTime() + 25920000);
+
+// fixed
+const HOUR_MS = 60 * 60 * 1000;
+export const SLA_HOURS: Readonly<Record<Priority, number>> = { HIGH: 4, MEDIUM: 24, LOW: 72 };
+return new Date(createdAt.getTime() + SLA_HOURS[priority] * HOUR_MS);`,
+      },
+    ],
+    code: ['docs/cases/10-magic-numbers.md', 'part3-review/vulnerable/ticket-service.ts', 'part3-review/fixed/ticket-service.ts', 'part3-review/test/review.spec.ts'],
+    questions: [
+      { q: { en: 'Is every number literal a magic number?', id: 'Apakah setiap literal angka adalah magic number?' },
+        a: { en: 'No. 0, 1 or 60 * 60 * 1000 written as a formula are clear. A magic number is a value whose meaning or unit you cannot tell from the code, like 25920000 or 0.15.',
+          id: 'Tidak. 0, 1, atau 60 * 60 * 1000 yang ditulis sebagai rumus sudah jelas. Magic number adalah nilai yang makna atau unitnya tidak bisa dibaca dari kode, seperti 25920000 atau 0.15.' } },
+      { q: { en: 'Does a named constant prove the value is right?', id: 'Apakah konstanta bernama membuktikan nilainya benar?' },
+        a: { en: 'No, it only makes it reviewable. The test against the written policy (4, 24, 72 hours) is what proves it.',
+          id: 'Tidak, ia hanya membuatnya bisa direview. Test terhadap kebijakan tertulis (4, 24, 72 jam) yang membuktikannya.' } },
+    ],
+  },
 ];
