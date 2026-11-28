@@ -205,9 +205,9 @@ export const focusProjects: FocusProject[] = [
   {
     id: 'mgs-live-coding',
     title: { en: 'MGS Live Coding', id: 'MGS Live Coding' },
-    intro: { en: 'Simulation for the PT Mega Giga Solusindo Backend Developer technical test: a 90-minute plan, algorithm patterns, a clean REST API and a code review checklist. Practice files live in the practice-mgs folder.',
-      id: 'Simulasi technical test Backend Developer PT Mega Giga Solusindo: rencana 90 menit, pola algoritma, REST API yang bersih, dan checklist code review. File latihan ada di folder practice-mgs.' },
-    repo: 'https://github.com/maeshataruna99-lgtm/core-learn',
+    intro: { en: 'Simulation for the PT Mega Giga Solusindo Backend Developer technical test: a 90-minute plan, algorithm patterns, a clean REST API and a code review checklist. The practice repo rebuilds all three parts with tests.',
+      id: 'Simulasi technical test Backend Developer PT Mega Giga Solusindo: rencana 90 menit, pola algoritma, REST API yang bersih, dan checklist code review. Repo latihan membangun ulang ketiga bagian beserta test-nya.' },
+    repo: 'https://github.com/maeshataruna99-lgtm/core-learn-technical',
     topics: mgsTopics,
   },
   {

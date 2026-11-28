@@ -2,7 +2,6 @@ import type { FocusTopic } from '../../core/focus.ts';
 
 // Simulasi technical test Backend Developer (PT Mega Giga Solusindo / PLN Icon+): live coding 90 menit.
 // Topic ids start with "mgs-" because progress keys share one namespace with the other projects.
-const P = 'practice-mgs';
 
 export const mgsTopics: FocusTopic[] = [
   {
@@ -35,7 +34,7 @@ npx prisma db seed
 npm test`,
       },
     ],
-    code: [`${P}/README.md`],
+    code: ['README.md', 'docs/rehearsal-log.md'],
     questions: [
       { q: { en: 'You are stuck on the algorithm at minute 20. What do you do?', id: 'Kamu buntu di algoritma pada menit 20. Apa yang dilakukan?' },
         a: { en: 'Submit the brute-force version that is correct, note its complexity in a comment, and move on. A working API and a thorough review are worth more than a perfect algorithm. If time remains at the end, return and optimise.',
@@ -81,7 +80,7 @@ this.store.set(userId, logs);
 return true;`,
       },
     ],
-    code: [`${P}/part1-algorithm.ts`, `${P}/part1-solutions.ts`],
+    code: ['part1-algorithm/src/summarize-payments.ts', 'part1-algorithm/src/rate-limiter.ts', 'part1-algorithm/src/brackets.ts', 'part1-algorithm/test/rate-limiter.test.ts'],
     questions: [
       { q: { en: 'Why must a rejected request not be recorded in the rate limiter?', id: 'Mengapa request yang ditolak tidak boleh dicatat di rate limiter?' },
         a: { en: 'If rejected hits were recorded, a client that keeps retrying would keep the window full forever and never recover. Recording only allowed requests means the window empties as time passes.',
@@ -139,7 +138,7 @@ if (count === 0) {
 }`,
       },
     ],
-    code: [`${P}/api/src/tickets/tickets.service.ts`, `${P}/api/src/tickets/tickets.controller.ts`, `${P}/api/src/tickets/dto/create-ticket.dto.ts`, `${P}/api/src/configure-app.ts`, `${P}/api/test/tickets.spec.ts`],
+    code: ['part2-api/src/tickets/tickets.service.ts', 'part2-api/src/tickets/tickets.controller.ts', 'part2-api/src/tickets/dto/create-ticket.dto.ts', 'part2-api/src/configure-app.ts', 'part2-api/src/common/filters/prisma-exception.filter.ts', 'part2-api/test/tickets.spec.ts'],
     questions: [
       { q: { en: 'When do you return 400, 404 and 409?', id: 'Kapan mengembalikan 400, 404, dan 409?' },
         a: { en: '400 when the request itself is malformed or fails validation. 404 when the target resource does not exist. 409 when the request is valid but conflicts with the current state, such as moving a DONE ticket back to OPEN.',
@@ -192,7 +191,7 @@ if ((await prisma.ticket.count()) === 0) {
 }`,
       },
     ],
-    code: [`${P}/api/prisma/schema.prisma`, `${P}/api/prisma/seed.ts`, `${P}/api/src/tickets/tickets.service.ts`],
+    code: ['part2-api/prisma/schema.prisma', 'part2-api/prisma/seed.ts', 'part2-api/src/tickets/tickets.service.ts', 'part2-api/test/prisma-schema.spec.ts'],
     questions: [
       { q: { en: 'migrate dev versus migrate deploy: when do you use each?', id: 'migrate dev versus migrate deploy: kapan memakai masing-masing?' },
         a: { en: 'migrate dev is for development: it diffs the schema, creates a new migration file, applies it and may reset a drifted database. migrate deploy only applies migrations that already exist, never creates or resets, so it is the one for CI and production.',
@@ -247,7 +246,7 @@ await prisma.$transaction([
 ]);`,
       },
     ],
-    code: [`${P}/part3-code-review.ts`, `${P}/part3-code-review-fixed.ts`, `${P}/part3-prisma-review.ts`, `${P}/part3-prisma-review-fixed.ts`],
+    code: ['part3-review/vulnerable/ticket-service.ts', 'part3-review/fixed/ticket-service.ts', 'part3-review/test/review.spec.ts', 'docs/review-findings.md'],
     questions: [
       { q: { en: 'What is the difference between Prisma $queryRaw and $queryRawUnsafe?', id: 'Apa bedanya Prisma $queryRaw dan $queryRawUnsafe?' },
         a: { en: '$queryRaw is a tagged template that sends interpolated values as SQL parameters, blocking SQL injection. $queryRawUnsafe accepts a plain string, so interpolating user input into it opens SQL injection. Always prefer Prisma model methods or $queryRaw.',
