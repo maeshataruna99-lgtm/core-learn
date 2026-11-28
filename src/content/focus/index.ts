@@ -1,6 +1,7 @@
 import type { FocusProject, FocusTopic } from '../../core/focus.ts';
 import { docExtractTopics } from './docextract.ts';
 import { mgsTopics } from './mgs.ts';
+import { mgsCaseTopics } from './mgs-cases.ts';
 import { rocketTopics } from './rocket.ts';
 import { simrsTopics } from './simrs.ts';
 import { splitBillTopics } from './splitbill.ts';
@@ -208,7 +209,7 @@ export const focusProjects: FocusProject[] = [
     intro: { en: 'Simulation for the PT Mega Giga Solusindo Backend Developer technical test: a 90-minute plan, algorithm patterns, a clean REST API and a code review checklist. The practice repo rebuilds all three parts with tests.',
       id: 'Simulasi technical test Backend Developer PT Mega Giga Solusindo: rencana 90 menit, pola algoritma, REST API yang bersih, dan checklist code review. Repo latihan membangun ulang ketiga bagian beserta test-nya.' },
     repo: 'https://github.com/maeshataruna99-lgtm/core-learn-technical',
-    topics: mgsTopics,
+    topics: [...mgsTopics, ...mgsCaseTopics],
   },
   {
     id: 'ai-ops',
